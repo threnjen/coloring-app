@@ -1,0 +1,16 @@
+[project]
+name = "coloring-app"
+version = "0.1.0"
+description = "Mosaic color-by-number coloring sheet generator"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosaic Coloring App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" integrity="sha512-UtLOu9C7BIHQKW3Xc4hOPSFSCCOKq9tXkMnb6K4YmaR2COzlfRWmxG/eq/Ttlh7XBc7b+MjJITCCh5vpo6Nig==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Mosaic Coloring App</h1>
+        <p class="subtitle">Upload a photo and create a color-by-number coloring sheet</p>
+    </header>
+
+    <main>
+        <!-- Step 1: Upload -->
+        <section id="step-upload" class="step active">
+            <h2>1. Upload a Photo</h2>
+            <div class="upload-area" id="upload-area">
+                <input type="file" id="file-input" accept="image/jpeg,image/png" hidden>
+                <button id="upload-btn" class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                    Choose Photo
+                </button>
+                <p class="hint">JPEG or PNG, max 20MB</p>
+            </div>
+            <div id="upload-error" class="error" hidden></div>
+        </section>
+
+        <!-- Step 2: Crop -->
+        <section id="step-crop" class="step" hidden>
+            <h2>2. Crop Your Photo</h2>
+            <div class="crop-container">
+                <img id="crop-image" src="" alt="Crop preview">
+            </div>
+            <button id="crop-btn" class="btn btn-primary">Crop & Continue</button>
+        </section>
+
+        <!-- Step 3: Process -->
+        <section id="step-process" class="step" hidden>
+            <h2>3. Choose Colors</h2>
+            <div class="color-control">
+                <label for="color-count">Number of colors:</label>
+                <input type="range" id="color-count" min="8" max="20" value="12">
+                <span id="color-value">12</span>
+            </div>
+            <button id="process-btn" class="btn btn-primary">Generate Mosaic</button>
+            <div id="process-loading" class="loading" hidden>
+                <div class="spinner"></div>
+                <span>Processing image…</span>
+            </div>
+        </section>
+
+        <!-- Step 4: Preview & Download -->
+        <section id="step-preview" class="step" hidden>
+            <h2>4. Preview & Download</h2>
+            <div class="preview-container">
+                <img id="preview-image" src="" alt="Mosaic preview">
+            </div>
+            <div class="palette-display" id="palette-display"></div>
+            <div class="actions">
+                <button id="download-btn" class="btn btn-primary">Download PDF</button>
+                <button id="restart-btn" class="btn btn-secondary">Start Over</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" integrity="sha512-EEUZWN0NkZoTSJelPfLMIgn8iSBSEAtiTsHGvDBrmQA3Ao/VFP6K5OFGv0YW5a7tLKBv3esNkpyDg0sMRzTJA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="js/crop.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

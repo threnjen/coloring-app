@@ -61,12 +61,14 @@
 
 ### Always
 - Commit early and often with meaningful messages
+- Use a virtual environment — activate `.venv` before running or installing anything
 
 ### Never
 - Use `--no-verify` to bypass hooks
 - Disable tests instead of fixing them
 - Commit code that doesn't compile
 - Reference "Claude" or "AI-generated" in messages
+- Install packages globally — always install inside an active virtual environment
 
 ### Decision Priority
 Testability → Readability → Consistency → Simplicity → Reversibility

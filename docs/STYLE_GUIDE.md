@@ -2,6 +2,12 @@
 
 *When to referrence*: When writing new modules, creating new classes, or unfamiliar with project conventions.
 
+### Environment
+- **Always** use a virtual environment — never install packages globally
+- Create with `python -m venv .venv` and activate before installing anything
+- Install dependencies with `pip install` only inside an active virtual environment
+- Add `.venv/` to `.gitignore`
+
 ### Logging
 - Use Python's `logging` module for all output
 - Never use `print()` statements

@@ -7,57 +7,57 @@ Ordered checklist of implementation work items. Each item maps to one or more ac
 ## Phase 1: Core Pipeline POC
 
 ### Project Setup
-- [ ] Initialize `pyproject.toml` with project metadata and tool config (AC1–AC12)
-- [ ] Create `requirements.txt` with Phase 1 dependencies (AC1–AC12)
-- [ ] Create `src/config.py` with grid dimensions, margins, color range, upload limits, label scheme (AC4, AC5, AC7)
-- [ ] Create `src/models/mosaic.py` with data classes: `ColorPalette`, `GridCell`, `MosaicSheet` (AC4, AC5)
-- [ ] Set up `logging` configuration in `src/main.py` (project convention)
+- [x] Initialize `pyproject.toml` with project metadata and tool config (AC1–AC12)
+- [x] Create `requirements.txt` with Phase 1 dependencies (AC1–AC12)
+- [x] Create `src/config.py` with grid dimensions, margins, color range, upload limits, label scheme (AC4, AC5, AC7)
+- [x] Create `src/models/mosaic.py` with data classes: `ColorPalette`, `GridCell`, `MosaicSheet` (AC4, AC5)
+- [x] Set up `logging` configuration in `src/main.py` (project convention)
 
 ### Image Upload & Crop
-- [ ] Create `src/main.py` — FastAPI app serving static files + API router (AC1)
-- [ ] Create `src/api/schemas.py` — Pydantic models for upload/crop/process requests and responses (AC1, AC2)
-- [ ] Create `src/api/routes.py` — `POST /api/upload` endpoint with file validation (magic bytes, size, format) (AC1)
-- [ ] Create `static/index.html` — upload UI with file picker (AC1)
-- [ ] Create `static/js/app.js` — upload handler, API calls (AC1)
-- [ ] Create `static/css/style.css` — basic app styles (AC1)
-- [ ] Implement `POST /api/crop` endpoint — accept image ID + crop coordinates, return cropped image (AC2)
-- [ ] Create `static/js/crop.js` — Cropper.js integration for zoom/crop interaction (AC2)
-- [ ] Write tests: `test_upload_valid_image`, `test_upload_invalid_file`, `test_upload_oversized` (AC1)
-- [ ] Write tests: `test_crop_valid_region`, `test_crop_too_small` (AC2)
+- [x] Create `src/main.py` — FastAPI app serving static files + API router (AC1)
+- [x] Create `src/api/schemas.py` — Pydantic models for upload/crop/process requests and responses (AC1, AC2)
+- [x] Create `src/api/routes.py` — `POST /api/upload` endpoint with file validation (magic bytes, size, format) (AC1)
+- [x] Create `static/index.html` — upload UI with file picker (AC1)
+- [x] Create `static/js/app.js` — upload handler, API calls (AC1)
+- [x] Create `static/css/style.css` — basic app styles (AC1)
+- [x] Implement `POST /api/crop` endpoint — accept image ID + crop coordinates, return cropped image (AC2)
+- [x] Create `static/js/crop.js` — Cropper.js integration for zoom/crop interaction (AC2)
+- [x] Write tests: `test_upload_valid_image`, `test_upload_invalid_file`, `test_upload_oversized` (AC1)
+- [x] Write tests: `test_crop_valid_region`, `test_crop_too_small` (AC2)
 
 ### Image Enhancement
-- [ ] Create `src/processing/enhancement.py` — basic contrast + saturation enhancement in LAB space (AC3)
-- [ ] Write tests: `test_enhancement_increases_contrast`, `test_enhancement_increases_saturation` (AC3)
+- [x] Create `src/processing/enhancement.py` — basic contrast + saturation enhancement in LAB space (AC3)
+- [x] Write tests: `test_enhancement_increases_contrast`, `test_enhancement_increases_saturation` (AC3)
 
 ### Color Quantization
-- [ ] Create `src/processing/quantization.py` — K-means clustering in CIELAB space (AC4)
-- [ ] Implement label assignment: colors 0–9, then A–J (AC4, AC5)
-- [ ] Write tests: `test_quantization_returns_requested_colors`, `test_quantization_uses_lab_space`, `test_quantization_fewer_distinct_colors` (AC4)
-- [ ] Write tests: `test_labels_single_char`, `test_labels_8_colors`, `test_labels_20_colors` (AC5)
+- [x] Create `src/processing/quantization.py` — K-means clustering in CIELAB space (AC4)
+- [x] Implement label assignment: colors 0–9, then A–J (AC4, AC5)
+- [x] Write tests: `test_quantization_returns_requested_colors`, `test_quantization_uses_lab_space`, `test_quantization_fewer_distinct_colors` (AC4)
+- [x] Write tests: `test_labels_single_char`, `test_labels_8_colors`, `test_labels_20_colors` (AC5)
 
 ### Grid Generation
-- [ ] Create `src/processing/grid.py` — convert quantized image to 2D GridCell array at 4mm/50×65 (AC5)
-- [ ] Write tests: `test_grid_dimensions_4mm`, `test_grid_all_cells_have_labels` (AC5)
+- [x] Create `src/processing/grid.py` — convert quantized image to 2D GridCell array at 4mm/50×65 (AC5)
+- [x] Write tests: `test_grid_dimensions_4mm`, `test_grid_all_cells_have_labels` (AC5)
 
 ### Preview Rendering
-- [ ] Create `src/rendering/preview.py` — generate colored grid PNG from grid data (AC8)
-- [ ] Implement `POST /api/process` — run enhance → quantize → grid → preview; return mosaic data (AC3–AC8)
-- [ ] Implement `GET /api/preview/{mosaic_id}` — return preview PNG (AC8)
-- [ ] Add preview display to frontend (AC8)
-- [ ] Write tests: `test_preview_dimensions`, `test_preview_colors_match_palette` (AC8)
-- [ ] Create golden reference fixtures for visual regression (AC8)
+- [x] Create `src/rendering/preview.py` — generate colored grid PNG from grid data (AC8)
+- [x] Implement `POST /api/process` — run enhance → quantize → grid → preview; return mosaic data (AC3–AC8)
+- [x] Implement `GET /api/preview/{mosaic_id}` — return preview PNG (AC8)
+- [x] Add preview display to frontend (AC8)
+- [x] Write tests: `test_preview_dimensions`, `test_preview_colors_match_palette` (AC8)
+- [ ] Create golden reference fixtures for visual regression (AC8) — deferred to QA
 
 ### PDF Generation
-- [ ] Create `src/rendering/pdf.py` — ReportLab PDF: page 1 = numbered grid, page 2 = color legend (AC12)
-- [ ] Implement grid page layout: 200mm × 263.5mm printable area, cells at 4mm (AC12)
-- [ ] Implement legend page: color swatches with labels (AC12)
-- [ ] Implement `GET /api/pdf/{mosaic_id}` endpoint (AC12)
-- [ ] Add "Download PDF" button to frontend (AC12)
-- [ ] Write tests: `test_pdf_two_pages`, `test_pdf_grid_page_dimensions`, `test_pdf_legend_has_all_colors` (AC12)
+- [x] Create `src/rendering/pdf.py` — ReportLab PDF: page 1 = numbered grid, page 2 = color legend (AC12)
+- [x] Implement grid page layout: 200mm × 263.5mm printable area, cells at 4mm (AC12)
+- [x] Implement legend page: color swatches with labels (AC12)
+- [x] Implement `GET /api/pdf/{mosaic_id}` endpoint (AC12)
+- [x] Add "Download PDF" button to frontend (AC12)
+- [x] Write tests: `test_pdf_two_pages`, `test_pdf_grid_page_dimensions`, `test_pdf_legend_has_all_colors` (AC12)
 
 ### Integration & QA
-- [ ] Write integration test: `test_full_pipeline` — upload → crop → process → download PDF (AC1–AC12)
-- [ ] Write integration test: `test_transparent_png_handling` (AC1)
+- [x] Write integration test: `test_full_pipeline` — upload → crop → process → download PDF (AC1–AC12)
+- [x] Write integration test: `test_transparent_png_handling` (AC1)
 - [ ] Manual QA: run through all 8 QA scenarios in Phase 1 doc
 - [ ] Print test: print PDF at 100% scale, measure cells with ruler = 4mm
 
