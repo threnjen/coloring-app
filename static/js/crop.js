@@ -17,6 +17,7 @@ class CropManager {
         this._imageEl.src = imageUrl;
         this._cropper = new Cropper(this._imageEl, {
             viewMode: 1,
+            aspectRatio: 60 / 80,
             autoCropArea: 0.8,
             responsive: true,
             guides: true,

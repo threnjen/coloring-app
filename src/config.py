@@ -17,15 +17,19 @@ MAX_COLORS: int = 20
 LABEL_CHARS: str = "0123456789ABCDEFGHIJ"
 
 # --- Grid (Phase 1: 4mm only) ---
-COMPONENT_SIZE_MM: float = 4.0
-GRID_COLUMNS: int = 50
-GRID_ROWS: int = 65
+COMPONENT_SIZE_MM: float = 3.0
+GRID_COLUMNS: int = 60
+GRID_ROWS: int = 80
 
 # --- Paper: US Letter ---
 PAPER_WIDTH_MM: float = 215.9
 PAPER_HEIGHT_MM: float = 279.4
-PRINTABLE_WIDTH_MM: float = 200.0
-PRINTABLE_HEIGHT_MM: float = 263.5  # Top-margin reference; grid = GRID_ROWS * COMPONENT_SIZE_MM = 260mm (3.5mm extra bottom margin)
+PRINTABLE_WIDTH_MM: float = (
+    GRID_COLUMNS * COMPONENT_SIZE_MM
+)  # 240mm (with 2.95mm side margins) - 3.5mm extra bottom margin
+PRINTABLE_HEIGHT_MM: float = (
+    GRID_ROWS * COMPONENT_SIZE_MM
+)  # Top-margin reference; grid = GRID_ROWS * COMPONENT_SIZE_MM = 260mm (3.5mm extra bottom margin)
 MARGIN_SIDE_MM: float = (PAPER_WIDTH_MM - PRINTABLE_WIDTH_MM) / 2
 MARGIN_TOP_MM: float = (PAPER_HEIGHT_MM - PRINTABLE_HEIGHT_MM) / 2
 
