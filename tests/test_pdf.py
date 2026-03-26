@@ -12,7 +12,7 @@ from src.models.mosaic import MosaicSheet
 from src.rendering.pdf import PdfRenderer
 
 
-def _make_sheet(n_colors: int = 12, columns: int = 50, rows: int = 65) -> MosaicSheet:
+def _make_sheet(n_colors: int = 12, columns: int = 60, rows: int = 80) -> MosaicSheet:
     """Helper to build a MosaicSheet for testing."""
     palette = ColorPalette(
         colors_rgb=np.random.default_rng(42).integers(0, 255, size=(n_colors, 3), dtype=np.uint8)
@@ -31,7 +31,7 @@ def _make_sheet(n_colors: int = 12, columns: int = 50, rows: int = 65) -> Mosaic
         palette=palette,
         columns=columns,
         rows=rows,
-        component_size_mm=4.0,
+        component_size_mm=3.0,
     )
 
 
@@ -51,17 +51,17 @@ class TestPdfRenderer:
         assert pdf_bytes.count(b"/Type /Page") >= 2
 
     def test_pdf_grid_page_dimensions(self) -> None:
-        """Grid should occupy 200mm × 260mm on US Letter (50×65 at 4mm). AC1.10."""
+        """Grid should occupy 180mm × 240mm on US Letter (60×80 at 3mm). AC1.10."""
         from src.config import MARGIN_SIDE_MM
         from src.config import MARGIN_TOP_MM
         from src.config import PAPER_HEIGHT_MM
         from src.config import PAPER_WIDTH_MM
 
-        sheet = _make_sheet(n_colors=12, columns=50, rows=65)
+        sheet = _make_sheet(n_colors=12, columns=60, rows=80)
         grid_width_mm = sheet.columns * sheet.component_size_mm
         grid_height_mm = sheet.rows * sheet.component_size_mm
-        assert grid_width_mm == 200.0
-        assert grid_height_mm == 260.0
+        assert grid_width_mm == 180.0
+        assert grid_height_mm == 240.0
         assert grid_width_mm + 2 * MARGIN_SIDE_MM <= PAPER_WIDTH_MM
         assert grid_height_mm + MARGIN_TOP_MM <= PAPER_HEIGHT_MM
 

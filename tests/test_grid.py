@@ -10,25 +10,25 @@ from src.processing.grid import GridGenerator
 class TestGridGenerator:
     """Tests for the GridGenerator class."""
 
-    def test_grid_dimensions_4mm(self) -> None:
-        """Given a label map, grid is 50 columns × 65 rows at 4mm."""
-        label_map = np.random.default_rng(42).integers(0, 8, size=(650, 500))
+    def test_grid_dimensions_3mm(self) -> None:
+        """Given a label map, grid is 60 columns × 80 rows at 3mm."""
+        label_map = np.random.default_rng(42).integers(0, 8, size=(800, 600))
         palette = ColorPalette(
             colors_rgb=np.random.default_rng(42).integers(0, 255, size=(8, 3), dtype=np.uint8)
         )
-        generator = GridGenerator(columns=50, rows=65)
+        generator = GridGenerator(columns=60, rows=80)
         grid = generator.generate(label_map, palette)
 
-        assert len(grid) == 65
-        assert len(grid[0]) == 50
+        assert len(grid) == 80
+        assert len(grid[0]) == 60
 
     def test_grid_all_cells_have_labels(self) -> None:
         """Every cell must have a valid single-character label."""
-        label_map = np.random.default_rng(42).integers(0, 12, size=(650, 500))
+        label_map = np.random.default_rng(42).integers(0, 12, size=(800, 600))
         palette = ColorPalette(
             colors_rgb=np.random.default_rng(42).integers(0, 255, size=(12, 3), dtype=np.uint8)
         )
-        generator = GridGenerator(columns=50, rows=65)
+        generator = GridGenerator(columns=60, rows=80)
         grid = generator.generate(label_map, palette)
 
         for row in grid:
@@ -64,9 +64,9 @@ class TestGridGenerator:
 
     def test_grid_cell_coordinates(self) -> None:
         """Each cell should have correct row/col coordinates."""
-        label_map = np.zeros((65, 50), dtype=int)
+        label_map = np.zeros((80, 60), dtype=int)
         palette = ColorPalette(colors_rgb=np.array([[0, 0, 0]], dtype=np.uint8))
-        generator = GridGenerator(columns=50, rows=65)
+        generator = GridGenerator(columns=60, rows=80)
         grid = generator.generate(label_map, palette)
 
         for r, row in enumerate(grid):

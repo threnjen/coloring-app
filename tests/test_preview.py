@@ -28,12 +28,12 @@ class TestPreviewRenderer:
 
     def test_preview_dimensions(self) -> None:
         """Preview image should be cols*cell_px × rows*cell_px."""
-        grid, palette = _make_grid(n_colors=8, columns=50, rows=65)
+        grid, palette = _make_grid(n_colors=8, columns=60, rows=80)
         renderer = PreviewRenderer(cell_size=PREVIEW_CELL_PX)
         img = renderer.render(grid, palette)
 
-        assert img.width == 50 * PREVIEW_CELL_PX
-        assert img.height == 65 * PREVIEW_CELL_PX
+        assert img.width == 60 * PREVIEW_CELL_PX
+        assert img.height == 80 * PREVIEW_CELL_PX
 
     def test_preview_is_rgb(self) -> None:
         """Preview image should be in RGB mode."""

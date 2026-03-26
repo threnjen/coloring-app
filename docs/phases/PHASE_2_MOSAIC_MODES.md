@@ -8,22 +8,25 @@
 
 ## Goal
 
-Extend the core pipeline with circle mosaic rendering, a component size selector (4mm/5mm/6mm), advanced image enhancement, and manual color palette editing with live preview updates. After this phase, the full mosaic rendering feature set is complete.
+Extend the core pipeline with circle and hexagon mosaic rendering, a component size selector (3mm/4mm/5mm), advanced image enhancement, and manual color palette editing with live preview updates. After this phase, the full mosaic rendering feature set is complete.
 
 ## Acceptance Criteria
 
 | ID | Criterion |
 |----|-----------|
-| AC2.1 | User can choose between square (pixel) and circle mosaic modes |
+| AC2.1 | User can choose between square (pixel), circle, and hexagon mosaic modes |
 | AC2.2 | Circle mode renders circles in a grid with black inter-cell space (not touching) |
-| AC2.3 | User can select component size: 4mm, 5mm, or 6mm |
-| AC2.4 | Grid dimensions adjust correctly per size (50×65 at 4mm, 40×52 at 5mm, 33×43 at 6mm) |
+| AC2.3 | User can select component size: 3mm, 4mm, or 5mm |
+| AC2.4 | Square/circle grid dimensions adjust correctly per size (60×80 at 3mm, 50×65 at 4mm, 40×52 at 5mm) |
 | AC2.5 | App applies advanced enhancement: adaptive contrast (CLAHE), saturation curves, edge-aware sharpening |
 | AC2.6 | User can view the color palette and manually swap or adjust any color |
 | AC2.7 | When a user edits a color, all affected grid cells update and the preview refreshes |
-| AC2.8 | PDF output respects the selected mode (square or circle) and component size |
+| AC2.8 | PDF output respects the selected mode (square, circle, or hexagon) and component size |
 | AC2.9 | Circle mode PDF renders circles with labels centered inside each circle |
-| AC2.10 | Legend page works correctly for both modes |
+| AC2.10 | Legend page works correctly for all three modes |
+| AC2.11 | Hexagon mode renders pointy-top hexagons in an offset grid with black inter-cell space |
+| AC2.12 | Hexagon grid dimensions adjust per size (60×93 at 3mm, 45×70 at 4mm, 36×56 at 5mm) |
+| AC2.13 | Hexagon mode PDF renders pointy-top hexagons with labels centered inside each hexagon |
 
 ## Architecture Changes
 
@@ -35,8 +38,9 @@ Extend the core pipeline with circle mosaic rendering, a component size selector
 | `src/processing/enhancement.py` | Add CLAHE, saturation curve adjustment, edge-aware sharpening |
 | `src/rendering/grid_square.py` | Renamed from `grid.py` — square-specific rendering |
 | `src/rendering/grid_circle.py` | New — circle grid rendering with black inter-cell space |
-| `src/rendering/preview.py` | Support both modes; accept mode parameter |
-| `src/rendering/pdf.py` | Support both modes and all sizes; layout adjusts per grid dimensions |
+| `src/rendering/grid_hexagon.py` | New — hexagon grid rendering with pointy-top orientation and black inter-cell space |
+| `src/rendering/preview.py` | Support all three modes; accept mode parameter |
+| `src/rendering/pdf.py` | Support all three modes and all sizes; layout adjusts per grid dimensions |
 | `src/api/routes.py` | Add `mode` and `size` parameters to `/api/process` |
 | `src/api/schemas.py` | Add `MosaicMode` enum, `ComponentSize` enum |
 | `static/js/app.js` | Add mode toggle (square/circle), size dropdown, color palette editor UI |
@@ -49,6 +53,26 @@ Extend the core pipeline with circle mosaic rendering, a component size selector
 - Background between circles is solid black
 - Label character centered inside each circle
 - At 4mm: circle diameter ~3.5mm with ~0.25mm gap on each side
+
+### Hexagon Grid Rendering
+
+- **Orientation**: Pointy-top (vertices at top and bottom, flat sides on left and right)
+- Each cell is a regular hexagon with flat-to-flat distance = component size minus a fixed gap
+- Odd rows are offset horizontally by half the column spacing (offset coordinate system)
+- Vertical row spacing = component size × √3/2 ≈ 0.866 × component size
+- Background between hexagons is solid black
+- Label character centered inside each hexagon
+- At 4mm: hexagon flat-to-flat ~3.5mm with ~0.25mm gap on each side
+
+#### Hexagon Grid Dimensions
+
+Calculated from the 180mm × 240mm printable area (matching the 3mm square baseline). Rounded up when uneven.
+
+| Component Size | Columns | Rows | Row Spacing | Total Cells |
+|----------------|---------|------|-------------|-------------|
+| 3mm | 60 | 93 | ~2.60mm | ~5,580 |
+| 4mm | 45 | 70 | ~3.46mm | ~3,150 |
+| 5mm | 36 | 56 | ~4.33mm | ~2,016 |
 
 ### Color Palette Editor
 
@@ -69,6 +93,8 @@ Extend the core pipeline with circle mosaic rendering, a component size selector
 | Scenario | Handling |
 |----------|----------|
 | Circle mode at 4mm with 20 colors | Labels must fit inside 3.5mm circle — verify font size is legible |
+| Hexagon mode at 3mm with 20 colors | Labels must fit inside inscribed circle of hex (~2.6mm) — verify font size is legible |
+| Hexagon odd-row offset at grid edges | Offset row extends s/2 past right edge — clip or allow slight overshoot within margin |
 | Size change after processing | Re-run grid generation (not the full pipeline); quantized colors stay the same |
 | Color edit to a color already in palette | Warn or merge: "This color is already used as label X" |
 | Color edit resulting in two very similar colors | Warn if LAB distance < threshold: "Colors X and Y may be hard to distinguish" |
@@ -80,42 +106,54 @@ Extend the core pipeline with circle mosaic rendering, a component size selector
 
 | Test | Maps to |
 |------|---------|
+| `test_circle_grid_dimensions_3mm` | AC2.4 — 60×80 grid |
 | `test_circle_grid_dimensions_4mm` | AC2.4 — 50×65 grid |
 | `test_circle_grid_dimensions_5mm` | AC2.4 — 40×52 grid |
-| `test_circle_grid_dimensions_6mm` | AC2.4 — 33×43 grid |
 | `test_circle_rendering_has_black_gaps` | AC2.2 — verify black pixels exist between circles |
+| `test_hexagon_grid_dimensions_3mm` | AC2.12 — 60×93 grid |
+| `test_hexagon_grid_dimensions_4mm` | AC2.12 — 45×70 grid |
+| `test_hexagon_grid_dimensions_5mm` | AC2.12 — 36×56 grid |
+| `test_hexagon_rendering_has_black_gaps` | AC2.11 — verify black pixels exist between hexagons |
+| `test_hexagon_odd_row_offset` | AC2.11 — odd rows offset by half column spacing |
+| `test_hexagon_pointy_top_orientation` | AC2.11 — vertices at top/bottom, flats on sides |
 | `test_clahe_improves_local_contrast` | AC2.5 — local variance increases |
 | `test_saturation_boost_preserves_range` | AC2.5 — no channel clipping |
 | `test_color_swap_updates_grid` | AC2.7 — after swap, all cells with old color now have new color |
 | `test_pdf_circle_mode_renders_circles` | AC2.9 — PDF inspection shows circular drawing commands |
+| `test_pdf_hexagon_mode_renders_hexagons` | AC2.13 — PDF contains hexagonal path drawing commands |
 
 ### Integration Tests
 
 | Test | Description |
 |------|-------------|
 | `test_pipeline_circle_mode` | Full pipeline with circle mode → verify PDF renders circles |
-| `test_size_change_preserves_palette` | Process at 4mm → change to 6mm → palette remains identical |
+| `test_pipeline_hexagon_mode` | Full pipeline with hexagon mode → verify PDF renders hexagons |
+| `test_size_change_preserves_palette` | Process at 4mm → change to 5mm → palette remains identical |
 | `test_color_edit_round_trip` | Process → edit color → download PDF → verify legend reflects edit |
 
-### Top 5 High-Value Test Cases
+### Top 6 High-Value Test Cases
 
 1. **Given** a processed mosaic at 4mm square, **When** user switches to circle mode, **Then** preview updates to show circles with black gaps, same colors and labels.
 
 2. **Given** a 4mm circle grid with 20 colors, **When** PDF generated, **Then** all labels are legible inside 3.5mm circles.
 
-3. **Given** a processed mosaic, **When** user changes size from 4mm to 6mm, **Then** grid changes to 33×43, palette stays the same, and the preview image is recognizable as the same subject.
+3. **Given** a processed mosaic at 4mm, **When** user switches to hexagon mode, **Then** preview shows pointy-top hexagons with offset rows, black gaps, same colors and labels.
 
-4. **Given** a processed mosaic with 15 colors, **When** user swaps color #5 from red to blue, **Then** all cells labeled "5" change to blue in preview, and the legend updates.
+4. **Given** a processed mosaic, **When** user changes size from 4mm to 5mm, **Then** grid dimensions change per mode, palette stays the same, and the preview image is recognizable as the same subject.
 
-5. **Given** a low-contrast photo, **When** processed with CLAHE + saturation boost, **Then** the quantized colors are more distinct than Phase 1 basic enhancement (measured by mean pairwise LAB distance).
+5. **Given** a processed mosaic with 15 colors, **When** user swaps color #5 from red to blue, **Then** all cells labeled "5" change to blue in preview, and the legend updates.
+
+6. **Given** a low-contrast photo, **When** processed with CLAHE + saturation boost, **Then** the quantized colors are more distinct than Phase 1 basic enhancement (measured by mean pairwise LAB distance).
 
 ## QA Manual Test Scenarios
 
 | # | Scenario | Steps | Expected Result |
 |---|----------|-------|-----------------|
-| QA1 | Mode toggle | Process an image, switch between Square and Circle | Preview changes between pixel grid and circle grid |
-| QA2 | Size selector | Process, then change 4mm → 5mm → 6mm | Grid density visibly changes; image still recognizable |
+| QA1 | Mode toggle | Process an image, switch between Square, Circle, and Hexagon | Preview changes between pixel grid, circle grid, and hexagon grid |
+| QA2 | Size selector | Process, then change 3mm → 4mm → 5mm | Grid density visibly changes; image still recognizable |
 | QA3 | Circle PDF | Generate PDF in circle mode | Circles with labels, black background between them |
+| QA3b | Hexagon PDF | Generate PDF in hexagon mode | Pointy-top hexagons with labels, black background between them |
+| QA3c | Hexagon offset rows | Inspect hexagon preview closely | Odd rows are visibly offset by half a column width |
 | QA4 | Color editing | Click a palette swatch, pick new color | Affected cells in preview update to new color |
 | QA5 | Edit + download | Edit 2 colors, then download PDF | PDF reflects edited colors in both grid and legend |
 | QA6 | Enhancement comparison | Toggle before/after enhancement view | Clear difference in contrast and color vibrancy |

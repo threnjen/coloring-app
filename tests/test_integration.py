@@ -146,8 +146,8 @@ class TestFullPipeline:
         assert process_res.status_code == 200
         body = process_res.json()
         assert body["num_colors"] == 12
-        assert body["columns"] == 50
-        assert body["rows"] == 65
+        assert body["columns"] == 60
+        assert body["rows"] == 80
         assert len(body["palette"]) == 12
         mosaic_id = body["mosaic_id"]
 

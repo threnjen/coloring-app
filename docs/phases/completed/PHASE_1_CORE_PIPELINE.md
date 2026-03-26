@@ -21,11 +21,11 @@ This phase proves the image processing pipeline works and produces usable colori
 | AC1.3 | App applies basic contrast and saturation enhancement to the cropped image |
 | AC1.4 | User selects number of colors (8–20 via slider or input) |
 | AC1.5 | App quantizes the enhanced image to the selected number of colors using K-means in CIELAB color space |
-| AC1.6 | App generates a square pixel grid at 4mm component size (50 columns × 65 rows) |
+| AC1.6 | App generates a square pixel grid at 3mm component size (60 columns × 80 rows) |
 | AC1.7 | Each cell displays a single-character label (0–9, then A–J) corresponding to its color |
 | AC1.8 | User sees an on-screen preview of the generated mosaic grid |
 | AC1.9 | User can download a PDF: page 1 = numbered grid, page 2 = color legend with swatches and labels |
-| AC1.10 | The PDF grid fills the printable area (200mm × 263.5mm) on US Letter paper |
+| AC1.10 | The PDF grid fills the printable area (180mm × 240mm) on US Letter paper |
 
 ## Architecture
 
@@ -92,10 +92,10 @@ Upload (JPEG/PNG)
 ### Key Design Decisions
 
 1. **LAB color space for quantization**: K-means in RGB produces perceptually uneven clusters. CIELAB is perceptually uniform — similar LAB distances mean similar perceived colors.
-2. **Single-character labels**: `0–9` then `A–J` covers 20 colors max. Fits comfortably in 4mm cells.
+2. **Single-character labels**: `0–9` then `A–J` covers 20 colors max. Fits comfortably in 3mm cells.
 3. **Temp file storage**: Phase 1 uses filesystem temp directory (`tempfile`). No database. Each upload gets a UUID directory.
 4. **Grid-first approach**: The grid is the core data structure — a 2D array of `GridCell` objects, each holding (row, col, color_index, label). All rendering (preview, PDF) reads from this grid.
-5. **4mm only in Phase 1**: Size selector (5mm, 6mm) deferred to Phase 2 to keep POC focused.
+5. **3mm only in Phase 1**: Size selector (4mm, 5mm, 6mm) deferred to Phase 2 to keep POC focused.
 
 ## Correctness & Edge Cases
 
@@ -139,11 +139,11 @@ Upload (JPEG/PNG)
 | `test_enhancement_increases_saturation` | AC1.3 | Given a desaturated image, when enhanced, then mean saturation in HSV increases |
 | `test_quantization_returns_requested_colors` | AC1.5 | Given an image and N=12, when quantized, then palette has exactly 12 colors |
 | `test_quantization_uses_lab_space` | AC1.5 | Given two perceptually similar RGB colors, when quantized, they merge into one cluster |
-| `test_grid_dimensions` | AC1.6 | Given a cropped image, when grid is built at 4mm, then grid is 50 columns × 65 rows |
+| `test_grid_dimensions` | AC1.6 | Given a cropped image, when grid is built at 3mm, then grid is 60 columns × 80 rows |
 | `test_grid_labels_single_char` | AC1.7 | Given 20 colors, when labels assigned, then all labels are single characters 0-9, A-J |
 | `test_grid_labels_8_colors` | AC1.7 | Given 8 colors, when labels assigned, then labels are 0-7 |
 | `test_pdf_two_pages` | AC1.9 | Given a mosaic, when PDF generated, then PDF has exactly 2 pages |
-| `test_pdf_grid_page_dimensions` | AC1.10 | Given a mosaic, when PDF generated, then grid area is 200mm × 263.5mm |
+| `test_pdf_grid_page_dimensions` | AC1.10 | Given a mosaic, when PDF generated, then grid area is 180mm × 240mm |
 | `test_pdf_legend_has_all_colors` | AC1.9 | Given a 15-color mosaic, when PDF generated, then legend page shows 15 swatches with correct labels |
 
 ### Integration Tests
@@ -162,7 +162,7 @@ Upload (JPEG/PNG)
 
 ### Top 5 High-Value Test Cases
 
-1. **Given** a 1200×800 photo of a landscape, **When** cropped to center 800×600, enhanced, and quantized to 12 colors, **Then** the grid is 50×65, all cells have labels 0-9/A-B, and PDF has 2 pages with correct dimensions.
+1. **Given** a 1200×800 photo of a landscape, **When** cropped to center 800×600, enhanced, and quantized to 12 colors, **Then** the grid is 60×80, all cells have labels 0-9/A-B, and PDF has 2 pages with correct dimensions.
 
 2. **Given** a nearly monochrome photo, **When** quantized to 15 colors, **Then** the app returns fewer colors than requested and the grid/legend reflect the actual count.
 
@@ -181,6 +181,6 @@ Upload (JPEG/PNG)
 | QA3 | Process with defaults | Set color count to 12, click Process | Loading indicator → preview of colored pixel grid appears |
 | QA4 | Verify grid labels | Zoom into preview | Each cell shows a single character (0-9 or A-J) |
 | QA5 | Download PDF | Click Download PDF | Browser downloads a PDF; page 1 = grid, page 2 = legend |
-| QA6 | Print test | Print the PDF at 100% scale | Measure grid cells with ruler — should be 4mm × 4mm |
+| QA6 | Print test | Print the PDF at 100% scale | Measure grid cells with ruler — should be 3mm × 3mm |
 | QA7 | Color count range | Try 7 (below min), 8, 20, 21 (above max) | 7 and 21 rejected; 8 and 20 accepted |
 | QA8 | Error handling | Upload a .txt file | Clear error message displayed |
