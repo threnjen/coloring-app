@@ -321,11 +321,8 @@ async def process_image(req: ProcessRequest) -> ProcessResponse:
     preview_dir.mkdir(parents=True, exist_ok=True)
     preview_img.save(str(preview_dir / "preview.png"), "PNG")
 
-    # Save pre-enhancement crop resized to preview dimensions for before/after toggle
-    pre_enhance_preview = pre_enhance_img.resize(
-        (preview_img.width, preview_img.height), Image.LANCZOS
-    )
-    pre_enhance_preview.save(str(preview_dir / "pre_enhance.png"), "PNG")
+    # Save pre-enhancement crop at native resolution for before/after toggle
+    pre_enhance_img.save(str(preview_dir / "pre_enhance.png"), "PNG")
 
     return ProcessResponse(
         mosaic_id=sheet.mosaic_id,

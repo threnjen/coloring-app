@@ -19,6 +19,9 @@ class ImageEnhancer:
     _CLAHE_TILE_GRID: tuple[int, int] = (8, 8)
     _SATURATION_BOOST: float = 0.4
     _SHARPEN_ALPHA: float = 0.5
+    _BILATERAL_D: int = 9
+    _BILATERAL_SIGMA_COLOR: float = 75
+    _BILATERAL_SIGMA_SPACE: float = 75
 
     def enhance(self, image: Image.Image) -> Image.Image:
         """Enhance contrast, saturation, and sharpness of an image.
@@ -59,7 +62,12 @@ class ImageEnhancer:
 
     def _sharpen(self, img: np.ndarray) -> np.ndarray:
         """Edge-aware sharpening via bilateral filter + unsharp mask."""
-        bilateral = cv2.bilateralFilter(img, d=9, sigmaColor=75, sigmaSpace=75)
+        bilateral = cv2.bilateralFilter(
+            img,
+            d=self._BILATERAL_D,
+            sigmaColor=self._BILATERAL_SIGMA_COLOR,
+            sigmaSpace=self._BILATERAL_SIGMA_SPACE,
+        )
         img_f = img.astype(np.float32)
         sharpened = img_f + self._SHARPEN_ALPHA * (img_f - bilateral.astype(np.float32))
         return np.clip(sharpened, 0, 255).astype(np.uint8)
