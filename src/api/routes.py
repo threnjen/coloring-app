@@ -10,22 +10,24 @@ from collections import OrderedDict
 from io import BytesIO
 from pathlib import Path
 
-from fastapi import APIRouter
-from fastapi import HTTPException
-from fastapi import UploadFile
+from fastapi import APIRouter, HTTPException, UploadFile
 from fastapi.responses import Response
 from PIL import Image
 
-from src.api.schemas import CropRequest
-from src.api.schemas import CropResponse
-from src.api.schemas import ProcessRequest
-from src.api.schemas import ProcessResponse
-from src.api.schemas import UploadResponse
-from src.config import MAX_IMAGE_DIMENSION
-from src.config import MAX_UPLOAD_SIZE_BYTES
-from src.config import MIN_CROP_PIXELS
-from src.config import GRID_DIMENSIONS
-from src.config import TEMP_DIR
+from src.api.schemas import (
+    CropRequest,
+    CropResponse,
+    ProcessRequest,
+    ProcessResponse,
+    UploadResponse,
+)
+from src.config import (
+    GRID_DIMENSIONS,
+    MAX_IMAGE_DIMENSION,
+    MAX_UPLOAD_SIZE_BYTES,
+    MIN_CROP_PIXELS,
+    TEMP_DIR,
+)
 from src.models.mosaic import MosaicSheet
 from src.processing.enhancement import ImageEnhancer
 from src.processing.grid import GridGenerator
@@ -226,7 +228,7 @@ async def crop_image(req: CropRequest) -> CropResponse:
 
 
 def _run_pipeline(
-    img: Image.Image, num_colors: int, size: int = 3
+    img: Image.Image, num_colors: int, size: int = 3, mode: str = "square"
 ) -> tuple[MosaicSheet, Image.Image, list[dict]]:
     """Run the CPU-intensive processing pipeline synchronously.
 
@@ -234,13 +236,14 @@ def _run_pipeline(
         img: Input image.
         num_colors: Number of colors for quantization.
         size: Component size in mm (3, 4, or 5).
+        mode: Mosaic mode ('square', 'circle', or 'hexagon').
 
     Returns:
         Tuple of (mosaic_sheet, preview_image, palette_info).
     """
     t0 = time.monotonic()
 
-    columns, rows = GRID_DIMENSIONS[(size, "square")]
+    columns, rows = GRID_DIMENSIONS[(size, mode)]
 
     # Enhance
     enhancer = ImageEnhancer()
@@ -269,11 +272,12 @@ def _run_pipeline(
         columns=columns,
         rows=rows,
         component_size_mm=float(size),
+        mode=mode,
     )
 
     # Render preview
     renderer = PreviewRenderer()
-    preview_img = renderer.render(grid, palette)
+    preview_img = renderer.render(grid, palette, mode=mode)
     t4 = time.monotonic()
     logger.info("Preview rendering: %.2fs", t4 - t3)
 
@@ -303,7 +307,7 @@ async def process_image(req: ProcessRequest) -> ProcessResponse:
     img = _load_stored_image(req.cropped_image_id)
 
     sheet, preview_img, palette_info = await asyncio.to_thread(
-        _run_pipeline, img, req.num_colors, req.size
+        _run_pipeline, img, req.num_colors, req.size, req.mode.value
     )
 
     _mosaic_store[sheet.mosaic_id] = sheet
@@ -322,6 +326,7 @@ async def process_image(req: ProcessRequest) -> ProcessResponse:
         columns=sheet.columns,
         rows=sheet.rows,
         component_size_mm=sheet.component_size_mm,
+        mode=sheet.mode,
         palette=palette_info,
     )
 

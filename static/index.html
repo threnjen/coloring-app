@@ -52,6 +52,23 @@
                     <option value="5">5mm (40×52)</option>
                 </select>
             </div>
+            <div class="mode-control">
+                <label>Mosaic mode:</label>
+                <div class="mode-options">
+                    <label class="mode-option">
+                        <input type="radio" name="mosaic-mode" value="square" checked>
+                        <span>Square</span>
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="mosaic-mode" value="circle">
+                        <span>Circle</span>
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="mosaic-mode" value="hexagon">
+                        <span>Hexagon</span>
+                    </label>
+                </div>
+            </div>
             <button id="process-btn" class="btn btn-primary">Generate Mosaic</button>
             <div id="process-loading" class="loading" hidden>
                 <div class="spinner"></div>

@@ -6,9 +6,7 @@ import numpy as np
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import mm
 
-from src.models.mosaic import ColorPalette
-from src.models.mosaic import GridCell
-from src.models.mosaic import MosaicSheet
+from src.models.mosaic import ColorPalette, GridCell, MosaicSheet
 from src.rendering.pdf import PdfRenderer
 
 
@@ -61,10 +59,12 @@ class TestPdfRenderer:
 
     def test_pdf_grid_page_dimensions(self) -> None:
         """Grid should occupy 180mm × 240mm on US Letter (60×80 at 3mm). AC1.10."""
-        from src.config import MARGIN_SIDE_MM
-        from src.config import MARGIN_TOP_MM
-        from src.config import PAPER_HEIGHT_MM
-        from src.config import PAPER_WIDTH_MM
+        from src.config import (
+            MARGIN_SIDE_MM,
+            MARGIN_TOP_MM,
+            PAPER_HEIGHT_MM,
+            PAPER_WIDTH_MM,
+        )
 
         sheet = _make_sheet(n_colors=12, columns=60, rows=80)
         grid_width_mm = sheet.columns * sheet.component_size_mm
@@ -117,7 +117,7 @@ class TestPdfRenderer:
         assert grid_width_mm == 200.0
         assert grid_height_mm == 260.0
 
-        from src.config import PAPER_WIDTH_MM, PAPER_HEIGHT_MM
+        from src.config import PAPER_HEIGHT_MM, PAPER_WIDTH_MM
 
         assert grid_width_mm <= PAPER_WIDTH_MM
         assert grid_height_mm <= PAPER_HEIGHT_MM

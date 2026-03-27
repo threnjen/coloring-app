@@ -6,8 +6,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from src.config import CONTRAST_FACTOR
-from src.config import SATURATION_FACTOR
+from src.config import CONTRAST_FACTOR, SATURATION_FACTOR
 
 logger = logging.getLogger(__name__)
 

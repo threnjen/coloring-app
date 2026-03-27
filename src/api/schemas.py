@@ -1,10 +1,18 @@
 """Pydantic request/response models for the API."""
 
-from pydantic import BaseModel
-from pydantic import Field
+from enum import Enum
 
-from src.config import MAX_COLORS
-from src.config import MIN_COLORS
+from pydantic import BaseModel, Field
+
+from src.config import MAX_COLORS, MIN_COLORS
+
+
+class MosaicMode(str, Enum):
+    """Available mosaic rendering modes."""
+
+    SQUARE = "square"
+    CIRCLE = "circle"
+    HEXAGON = "hexagon"
 
 
 class UploadResponse(BaseModel):
@@ -39,6 +47,7 @@ class ProcessRequest(BaseModel):
     cropped_image_id: str
     num_colors: int = Field(ge=MIN_COLORS, le=MAX_COLORS, default=12)
     size: int = Field(default=3, ge=3, le=5)
+    mode: MosaicMode = MosaicMode.SQUARE
 
 
 class ProcessResponse(BaseModel):
@@ -49,6 +58,7 @@ class ProcessResponse(BaseModel):
     columns: int
     rows: int
     component_size_mm: float
+    mode: MosaicMode
     palette: list[dict]
 
 
