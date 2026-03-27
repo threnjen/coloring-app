@@ -21,6 +21,7 @@ const stepPreview = document.getElementById('step-preview');
 const cropBtn = document.getElementById('crop-btn');
 const colorCount = document.getElementById('color-count');
 const colorValue = document.getElementById('color-value');
+const sizeSelect = document.getElementById('size-select');
 const processBtn = document.getElementById('process-btn');
 const processLoading = document.getElementById('process-loading');
 const previewImage = document.getElementById('preview-image');
@@ -120,6 +121,7 @@ processBtn.addEventListener('click', async () => {
             body: JSON.stringify({
                 cropped_image_id: state.croppedImageId,
                 num_colors: parseInt(colorCount.value, 10),
+                size: parseInt(sizeSelect.value, 10),
             }),
         });
         if (!res.ok) {

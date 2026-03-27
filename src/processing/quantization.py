@@ -34,7 +34,9 @@ class ColorQuantizer:
             Tuple of (label_map, palette) where label_map is a 2D array of
             color indices matching image dimensions, and palette is a ColorPalette.
         """
-        logger.info("Quantizing %dx%d to %d colors", image.width, image.height, self._n_colors)
+        logger.info(
+            "Quantizing %dx%d to %d colors", image.width, image.height, self._n_colors
+        )
         rgb = np.array(image.convert("RGB"))
         lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)
 

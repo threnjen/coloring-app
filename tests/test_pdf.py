@@ -12,17 +12,26 @@ from src.models.mosaic import MosaicSheet
 from src.rendering.pdf import PdfRenderer
 
 
-def _make_sheet(n_colors: int = 12, columns: int = 60, rows: int = 80) -> MosaicSheet:
+def _make_sheet(
+    n_colors: int = 12,
+    columns: int = 60,
+    rows: int = 80,
+    component_size_mm: float = 3.0,
+) -> MosaicSheet:
     """Helper to build a MosaicSheet for testing."""
     palette = ColorPalette(
-        colors_rgb=np.random.default_rng(42).integers(0, 255, size=(n_colors, 3), dtype=np.uint8)
+        colors_rgb=np.random.default_rng(42).integers(
+            0, 255, size=(n_colors, 3), dtype=np.uint8
+        )
     )
     grid = []
     for r in range(rows):
         row_cells = []
         for c in range(columns):
             idx = (r * columns + c) % n_colors
-            row_cells.append(GridCell(row=r, col=c, color_index=idx, label=palette.label(idx)))
+            row_cells.append(
+                GridCell(row=r, col=c, color_index=idx, label=palette.label(idx))
+            )
         grid.append(row_cells)
 
     return MosaicSheet(
@@ -31,7 +40,7 @@ def _make_sheet(n_colors: int = 12, columns: int = 60, rows: int = 80) -> Mosaic
         palette=palette,
         columns=columns,
         rows=rows,
-        component_size_mm=3.0,
+        component_size_mm=component_size_mm,
     )
 
 
@@ -99,3 +108,34 @@ class TestPdfRenderer:
             pdf_bytes = renderer.render(sheet)
             assert len(pdf_bytes) > 0
             assert pdf_bytes[:5] == b"%PDF-"
+
+    def test_pdf_layout_4mm(self) -> None:
+        """Grid area at 4mm = 50×4mm × 65×4mm = 200mm × 260mm. AC2.4."""
+        sheet = _make_sheet(n_colors=12, columns=50, rows=65, component_size_mm=4.0)
+        grid_width_mm = sheet.columns * sheet.component_size_mm
+        grid_height_mm = sheet.rows * sheet.component_size_mm
+        assert grid_width_mm == 200.0
+        assert grid_height_mm == 260.0
+
+        from src.config import PAPER_WIDTH_MM, PAPER_HEIGHT_MM
+
+        assert grid_width_mm <= PAPER_WIDTH_MM
+        assert grid_height_mm <= PAPER_HEIGHT_MM
+
+        renderer = PdfRenderer()
+        pdf_bytes = renderer.render(sheet)
+        assert len(pdf_bytes) > 0
+        assert pdf_bytes[:5] == b"%PDF-"
+
+    def test_pdf_layout_5mm(self) -> None:
+        """Grid area at 5mm = 40×5mm × 52×5mm = 200mm × 260mm. AC2.4."""
+        sheet = _make_sheet(n_colors=12, columns=40, rows=52, component_size_mm=5.0)
+        grid_width_mm = sheet.columns * sheet.component_size_mm
+        grid_height_mm = sheet.rows * sheet.component_size_mm
+        assert grid_width_mm == 200.0
+        assert grid_height_mm == 260.0
+
+        renderer = PdfRenderer()
+        pdf_bytes = renderer.render(sheet)
+        assert len(pdf_bytes) > 0
+        assert pdf_bytes[:5] == b"%PDF-"

@@ -8,17 +8,23 @@ from src.rendering.preview import PREVIEW_CELL_PX
 from src.rendering.preview import PreviewRenderer
 
 
-def _make_grid(n_colors: int, columns: int, rows: int) -> tuple[list[list[GridCell]], ColorPalette]:
+def _make_grid(
+    n_colors: int, columns: int, rows: int
+) -> tuple[list[list[GridCell]], ColorPalette]:
     """Build a simple grid and palette for testing."""
     palette = ColorPalette(
-        colors_rgb=np.random.default_rng(42).integers(0, 255, size=(n_colors, 3), dtype=np.uint8)
+        colors_rgb=np.random.default_rng(42).integers(
+            0, 255, size=(n_colors, 3), dtype=np.uint8
+        )
     )
     grid = []
     for r in range(rows):
         row_cells = []
         for c in range(columns):
             idx = (r * columns + c) % n_colors
-            row_cells.append(GridCell(row=r, col=c, color_index=idx, label=palette.label(idx)))
+            row_cells.append(
+                GridCell(row=r, col=c, color_index=idx, label=palette.label(idx))
+            )
         grid.append(row_cells)
     return grid, palette
 
@@ -60,7 +66,9 @@ class TestPreviewRenderer:
                         px = cell.col * cell_size + 1
                         py = cell.row * cell_size + 1
                         actual = tuple(pixels[py, px])
-                        assert actual == expected, f"Color {i}: expected {expected}, got {actual}"
+                        assert (
+                            actual == expected
+                        ), f"Color {i}: expected {expected}, got {actual}"
                         break
                 else:
                     continue

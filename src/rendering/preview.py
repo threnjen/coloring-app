@@ -39,19 +39,27 @@ class PreviewRenderer:
         width = cols * self._cell_size
         height = rows * self._cell_size
 
-        logger.info("Rendering preview %dx%d px (%dx%d cells)", width, height, cols, rows)
+        logger.info(
+            "Rendering preview %dx%d px (%dx%d cells)", width, height, cols, rows
+        )
 
         img = Image.new("RGB", (width, height), "white")
         draw = ImageDraw.Draw(img)
 
         font_size = max(7, self._cell_size - 4)
         try:
-            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size)
+            font = ImageFont.truetype(
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size
+            )
         except (OSError, IOError):
             try:
-                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", font_size)
+                font = ImageFont.truetype(
+                    "/System/Library/Fonts/Helvetica.ttc", font_size
+                )
             except (OSError, IOError):
-                logger.warning("No TrueType font found; falling back to default bitmap font")
+                logger.warning(
+                    "No TrueType font found; falling back to default bitmap font"
+                )
                 font = ImageFont.load_default()
 
         for row_cells in grid:

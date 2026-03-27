@@ -25,7 +25,9 @@ class GridGenerator:
         self._columns = columns
         self._rows = rows
 
-    def generate(self, label_map: np.ndarray, palette: ColorPalette) -> list[list[GridCell]]:
+    def generate(
+        self, label_map: np.ndarray, palette: ColorPalette
+    ) -> list[list[GridCell]]:
         """Generate a 2D grid of cells by downsampling the label map.
 
         Each cell is assigned the most common color index in its corresponding

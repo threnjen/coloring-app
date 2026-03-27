@@ -87,4 +87,4 @@ class MosaicSheet:
     palette: ColorPalette
     columns: int
     rows: int
-    component_size_mm: float = 4.0
+    component_size_mm: float = 3.0
