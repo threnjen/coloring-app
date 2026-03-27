@@ -22,6 +22,7 @@ const cropBtn = document.getElementById('crop-btn');
 const colorCount = document.getElementById('color-count');
 const colorValue = document.getElementById('color-value');
 const sizeSelect = document.getElementById('size-select');
+const modeRadios = document.querySelectorAll('input[name="mosaic-mode"]');
 const processBtn = document.getElementById('process-btn');
 const processLoading = document.getElementById('process-loading');
 const previewImage = document.getElementById('preview-image');
@@ -109,6 +110,26 @@ colorCount.addEventListener('input', () => {
     colorValue.textContent = colorCount.value;
 });
 
+// --- Size labels per mode ---
+const SIZE_LABELS = {
+    square:  { 3: '3mm (60×80)',  4: '4mm (50×65)',  5: '5mm (40×52)' },
+    circle:  { 3: '3mm (60×80)',  4: '4mm (50×65)',  5: '5mm (40×52)' },
+    hexagon: { 3: '3mm (60×93)',  4: '4mm (45×70)',  5: '5mm (36×56)' },
+};
+
+function updateSizeLabels() {
+    const mode = document.querySelector('input[name="mosaic-mode"]:checked').value;
+    const labels = SIZE_LABELS[mode];
+    for (const option of sizeSelect.options) {
+        const size = parseInt(option.value, 10);
+        if (labels[size]) {
+            option.textContent = labels[size];
+        }
+    }
+}
+
+modeRadios.forEach(radio => radio.addEventListener('change', updateSizeLabels));
+
 // --- Process ---
 processBtn.addEventListener('click', async () => {
     processBtn.disabled = true;
@@ -122,6 +143,7 @@ processBtn.addEventListener('click', async () => {
                 cropped_image_id: state.croppedImageId,
                 num_colors: parseInt(colorCount.value, 10),
                 size: parseInt(sizeSelect.value, 10),
+                mode: document.querySelector('input[name="mosaic-mode"]:checked').value,
             }),
         });
         if (!res.ok) {

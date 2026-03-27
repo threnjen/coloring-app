@@ -88,3 +88,4 @@ class MosaicSheet:
     columns: int
     rows: int
     component_size_mm: float = 3.0
+    mode: str = "square"

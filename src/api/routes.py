@@ -220,13 +220,11 @@ async def crop_image(req: CropRequest) -> CropResponse:
         cropped.height,
         time.monotonic() - t0,
     )
-    return CropResponse(
-        cropped_image_id=cropped_id, width=cropped.width, height=cropped.height
-    )
+    return CropResponse(cropped_image_id=cropped_id, width=cropped.width, height=cropped.height)
 
 
 def _run_pipeline(
-    img: Image.Image, num_colors: int, size: int = 3
+    img: Image.Image, num_colors: int, size: int = 3, mode: str = "square"
 ) -> tuple[MosaicSheet, Image.Image, list[dict]]:
     """Run the CPU-intensive processing pipeline synchronously.
 
@@ -234,13 +232,14 @@ def _run_pipeline(
         img: Input image.
         num_colors: Number of colors for quantization.
         size: Component size in mm (3, 4, or 5).
+        mode: Mosaic mode ('square', 'circle', or 'hexagon').
 
     Returns:
         Tuple of (mosaic_sheet, preview_image, palette_info).
     """
     t0 = time.monotonic()
 
-    columns, rows = GRID_DIMENSIONS[(size, "square")]
+    columns, rows = GRID_DIMENSIONS[(size, mode)]
 
     # Enhance
     enhancer = ImageEnhancer()
@@ -269,11 +268,12 @@ def _run_pipeline(
         columns=columns,
         rows=rows,
         component_size_mm=float(size),
+        mode=mode,
     )
 
     # Render preview
     renderer = PreviewRenderer()
-    preview_img = renderer.render(grid, palette)
+    preview_img = renderer.render(grid, palette, mode=mode)
     t4 = time.monotonic()
     logger.info("Preview rendering: %.2fs", t4 - t3)
 
@@ -296,14 +296,12 @@ def _run_pipeline(
 async def process_image(req: ProcessRequest) -> ProcessResponse:
     """Run the full processing pipeline: enhance → quantize → grid → preview."""
     _validate_id(req.cropped_image_id, "cropped image ID")
-    logger.info(
-        "Processing image %s with %d colors", req.cropped_image_id, req.num_colors
-    )
+    logger.info("Processing image %s with %d colors", req.cropped_image_id, req.num_colors)
 
     img = _load_stored_image(req.cropped_image_id)
 
     sheet, preview_img, palette_info = await asyncio.to_thread(
-        _run_pipeline, img, req.num_colors, req.size
+        _run_pipeline, img, req.num_colors, req.size, req.mode.value
     )
 
     _mosaic_store[sheet.mosaic_id] = sheet
@@ -322,6 +320,7 @@ async def process_image(req: ProcessRequest) -> ProcessResponse:
         columns=sheet.columns,
         rows=sheet.rows,
         component_size_mm=sheet.component_size_mm,
+        mode=sheet.mode,
         palette=palette_info,
     )
 
@@ -332,9 +331,7 @@ async def get_preview(mosaic_id: str) -> Response:
     _validate_id(mosaic_id, "mosaic ID")
     preview_path = _get_image_dir(mosaic_id) / "preview.png"
     if not preview_path.exists():
-        raise HTTPException(
-            status_code=404, detail=f"Preview for '{mosaic_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Preview for '{mosaic_id}' not found")
     return Response(
         content=preview_path.read_bytes(),
         media_type="image/png",
@@ -357,7 +354,5 @@ async def get_pdf(mosaic_id: str) -> Response:
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f'attachment; filename="mosaic-{mosaic_id[:8]}.pdf"'
-        },
+        headers={"Content-Disposition": f'attachment; filename="mosaic-{mosaic_id[:8]}.pdf"'},
     )
