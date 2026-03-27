@@ -29,6 +29,7 @@ const previewImage = document.getElementById('preview-image');
 const paletteDisplay = document.getElementById('palette-display');
 const downloadBtn = document.getElementById('download-btn');
 const restartBtn = document.getElementById('restart-btn');
+const toggleOriginal = document.getElementById('toggle-original');
 
 // --- Step navigation ---
 function showStep(stepEl) {
@@ -157,6 +158,7 @@ processBtn.addEventListener('click', async () => {
 
         // Display preview
         previewImage.src = `/api/preview/${data.mosaic_id}`;
+        toggleOriginal.checked = false;
 
         // Display palette
         paletteDisplay.innerHTML = '';
@@ -179,6 +181,14 @@ processBtn.addEventListener('click', async () => {
     }
 });
 
+// --- Before/after toggle ---
+toggleOriginal.addEventListener('change', () => {
+    if (!state.mosaicId) return;
+    previewImage.src = toggleOriginal.checked
+        ? `/api/preview/${state.mosaicId}/original`
+        : `/api/preview/${state.mosaicId}`;
+});
+
 // --- Download PDF ---
 downloadBtn.addEventListener('click', () => {
     if (state.mosaicId) {
@@ -193,6 +203,7 @@ restartBtn.addEventListener('click', () => {
     state.mosaicId = null;
     state.originalFile = null;
     fileInput.value = '';
+    toggleOriginal.checked = false;
     clearError();
     showStep(stepUpload);
 });

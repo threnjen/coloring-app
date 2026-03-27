@@ -229,7 +229,7 @@ async def crop_image(req: CropRequest) -> CropResponse:
 
 def _run_pipeline(
     img: Image.Image, num_colors: int, size: int = 3, mode: str = "square"
-) -> tuple[MosaicSheet, Image.Image, list[dict]]:
+) -> tuple[MosaicSheet, Image.Image, list[dict], Image.Image]:
     """Run the CPU-intensive processing pipeline synchronously.
 
     Args:
@@ -239,13 +239,14 @@ def _run_pipeline(
         mode: Mosaic mode ('square', 'circle', or 'hexagon').
 
     Returns:
-        Tuple of (mosaic_sheet, preview_image, palette_info).
+        Tuple of (mosaic_sheet, preview_image, palette_info, pre_enhance_image).
     """
     t0 = time.monotonic()
 
     columns, rows = GRID_DIMENSIONS[(size, mode)]
 
-    # Enhance
+    # Enhance — keep the pre-enhancement crop for before/after comparison
+    pre_enhance_img = img.copy()
     enhancer = ImageEnhancer()
     enhanced = enhancer.enhance(img)
     t1 = time.monotonic()
@@ -293,7 +294,7 @@ def _run_pipeline(
         )
 
     logger.info("Pipeline complete: mosaic_id=%s total=%.2fs", mosaic_id, t4 - t0)
-    return sheet, preview_img, palette_info
+    return sheet, preview_img, palette_info, pre_enhance_img
 
 
 @router.post("/process", response_model=ProcessResponse)
@@ -306,7 +307,7 @@ async def process_image(req: ProcessRequest) -> ProcessResponse:
 
     img = _load_stored_image(req.cropped_image_id)
 
-    sheet, preview_img, palette_info = await asyncio.to_thread(
+    sheet, preview_img, palette_info, pre_enhance_img = await asyncio.to_thread(
         _run_pipeline, img, req.num_colors, req.size, req.mode.value
     )
 
@@ -319,6 +320,9 @@ async def process_image(req: ProcessRequest) -> ProcessResponse:
     preview_dir = _get_image_dir(sheet.mosaic_id)
     preview_dir.mkdir(parents=True, exist_ok=True)
     preview_img.save(str(preview_dir / "preview.png"), "PNG")
+
+    # Save pre-enhancement crop at native resolution for before/after toggle
+    pre_enhance_img.save(str(preview_dir / "pre_enhance.png"), "PNG")
 
     return ProcessResponse(
         mosaic_id=sheet.mosaic_id,
@@ -342,6 +346,21 @@ async def get_preview(mosaic_id: str) -> Response:
         )
     return Response(
         content=preview_path.read_bytes(),
+        media_type="image/png",
+    )
+
+
+@router.get("/preview/{mosaic_id}/original")
+async def get_preview_original(mosaic_id: str) -> Response:
+    """Return the pre-enhancement (original crop) preview PNG."""
+    _validate_id(mosaic_id, "mosaic ID")
+    original_path = _get_image_dir(mosaic_id) / "pre_enhance.png"
+    if not original_path.exists():
+        raise HTTPException(
+            status_code=404, detail=f"Original preview for '{mosaic_id}' not found"
+        )
+    return Response(
+        content=original_path.read_bytes(),
         media_type="image/png",
     )
 

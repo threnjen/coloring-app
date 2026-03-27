@@ -58,7 +58,3 @@ TEMP_TTL_SECONDS: int = int(os.getenv("TEMP_TTL_SECONDS", "3600"))
 TEMP_CLEANUP_INTERVAL_SECONDS: int = int(
     os.getenv("TEMP_CLEANUP_INTERVAL_SECONDS", "300")
 )
-
-# --- Enhancement ---
-CONTRAST_FACTOR: float = float(os.getenv("CONTRAST_FACTOR", "1.3"))
-SATURATION_FACTOR: float = float(os.getenv("SATURATION_FACTOR", "1.3"))
