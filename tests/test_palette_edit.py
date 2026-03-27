@@ -19,7 +19,9 @@ def _make_sheet(palette: ColorPalette, rows: int = 4, cols: int = 4) -> MosaicSh
         row: list[GridCell] = []
         for c in range(cols):
             idx = (r * cols + c) % palette.count
-            row.append(GridCell(row=r, col=c, color_index=idx, label=palette.label(idx)))
+            row.append(
+                GridCell(row=r, col=c, color_index=idx, label=palette.label(idx))
+            )
         grid.append(row)
     return MosaicSheet(
         mosaic_id="a" * 32,
@@ -102,7 +104,10 @@ class TestSimilarColorWarning:
         )
         # Editing index 3 to a color very similar to index 0
         warnings = _compute_palette_warnings(palette, color_index=3)
-        assert any("similar" in w.lower() or "hard to distinguish" in w.lower() for w in warnings)
+        assert any(
+            "similar" in w.lower() or "hard to distinguish" in w.lower()
+            for w in warnings
+        )
 
     def test_no_warning_for_distinct_color(self) -> None:
         """Distant colors produce no similarity warnings."""

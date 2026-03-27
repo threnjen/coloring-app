@@ -172,6 +172,7 @@ processBtn.addEventListener('click', async () => {
             colorInput.type = 'color';
             colorInput.value = c.hex;
             colorInput.className = 'palette-color-input';
+            colorInput.dataset.confirmed = c.hex;
 
             const swatchSpan = document.createElement('span');
             swatchSpan.className = 'swatch';
@@ -223,6 +224,13 @@ toggleOriginal.addEventListener('change', () => {
 
 // --- Palette edit ---
 async function _editPaletteColor(mosaicId, colorIndex, hexColor) {
+    // Find the swatch elements for this index so we can revert on failure
+    const swatches = paletteDisplay.querySelectorAll('.palette-swatch--editable');
+    const swatchEl = swatches[colorIndex];
+    const swatchSpan = swatchEl ? swatchEl.querySelector('.swatch') : null;
+    const colorInput = swatchEl ? swatchEl.querySelector('.palette-color-input') : null;
+    const previousColor = colorInput ? colorInput.dataset.confirmed || colorInput.value : hexColor;
+
     try {
         const res = await fetch('/api/palette/edit', {
             method: 'POST',
@@ -233,8 +241,16 @@ async function _editPaletteColor(mosaicId, colorIndex, hexColor) {
                 new_color: hexColor,
             }),
         });
-        if (!res.ok) return;
+        if (!res.ok) {
+            // Revert optimistic UI update
+            if (swatchSpan) swatchSpan.style.background = previousColor;
+            if (colorInput) colorInput.value = previousColor;
+            return;
+        }
         const data = await res.json();
+
+        // Store confirmed color for future rollback
+        if (colorInput) colorInput.dataset.confirmed = hexColor;
 
         // Refresh preview with cache-bust
         previewImage.src = `/api/preview/${mosaicId}?t=${Date.now()}`;
@@ -247,7 +263,9 @@ async function _editPaletteColor(mosaicId, colorIndex, hexColor) {
                 : '';
         }
     } catch (err) {
-        // Silently ignore network errors during rapid color picking
+        // Revert optimistic UI update on network error
+        if (swatchSpan) swatchSpan.style.background = previousColor;
+        if (colorInput) colorInput.value = previousColor;
     }
 }
 
