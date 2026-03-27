@@ -16,10 +16,27 @@ MIN_COLORS: int = 8
 MAX_COLORS: int = 20
 LABEL_CHARS: str = "0123456789ABCDEFGHIJ"
 
-# --- Grid (Phase 1: 3mm only) ---
+
+# --- Grid (Phase 1 defaults: 3mm) ---
 COMPONENT_SIZE_MM: float = 3.0
 GRID_COLUMNS: int = 60
 GRID_ROWS: int = 80
+
+# Lookup table: (size_mm, mode) → (columns, rows)
+GRID_DIMENSIONS: dict[tuple[int, str], tuple[int, int]] = {
+    # Square
+    (3, "square"): (60, 80),
+    (4, "square"): (50, 65),
+    (5, "square"): (40, 52),
+    # Circle (same as square)
+    (3, "circle"): (60, 80),
+    (4, "circle"): (50, 65),
+    (5, "circle"): (40, 52),
+    # Hexagon (pointy-top)
+    (3, "hexagon"): (60, 93),
+    (4, "hexagon"): (45, 70),
+    (5, "hexagon"): (36, 56),
+}
 
 # --- Paper: US Letter ---
 PAPER_WIDTH_MM: float = 215.9

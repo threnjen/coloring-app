@@ -136,6 +136,21 @@ header h1 {
     min-width: 24px;
 }
 
+/* --- Size control --- */
+.size-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.size-control select {
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
 /* --- Loading --- */
 .loading {
     display: flex;

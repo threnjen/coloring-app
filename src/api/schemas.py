@@ -38,6 +38,7 @@ class ProcessRequest(BaseModel):
 
     cropped_image_id: str
     num_colors: int = Field(ge=MIN_COLORS, le=MAX_COLORS, default=12)
+    size: int = Field(default=3, ge=3, le=5)
 
 
 class ProcessResponse(BaseModel):
@@ -47,6 +48,7 @@ class ProcessResponse(BaseModel):
     num_colors: int
     columns: int
     rows: int
+    component_size_mm: float
     palette: list[dict]
 
 

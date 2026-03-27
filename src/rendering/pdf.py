@@ -7,8 +7,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
-from src.config import MARGIN_SIDE_MM
-from src.config import MARGIN_TOP_MM
+from src.config import PAPER_HEIGHT_MM
+from src.config import PAPER_WIDTH_MM
 from src.models.mosaic import ColorPalette
 from src.models.mosaic import GridCell
 from src.models.mosaic import MosaicSheet
@@ -52,8 +52,13 @@ class PdfRenderer:
         cell_mm = sheet.component_size_mm
         cell_pt = cell_mm * mm
 
-        x_offset = MARGIN_SIDE_MM * mm
-        y_top = page_h - MARGIN_TOP_MM * mm
+        grid_width_mm = sheet.columns * cell_mm
+        grid_height_mm = sheet.rows * cell_mm
+        margin_side_mm = (PAPER_WIDTH_MM - grid_width_mm) / 2
+        margin_top_mm = (PAPER_HEIGHT_MM - grid_height_mm) / 2
+
+        x_offset = margin_side_mm * mm
+        y_top = page_h - margin_top_mm * mm
 
         font_name = "Helvetica"
         font_size = max(4, cell_mm * 0.6) * mm / mm * 2

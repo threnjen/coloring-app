@@ -185,3 +185,83 @@ class TestFullPipeline:
         """PDF for non-existent mosaic returns 404."""
         res = client.get("/api/pdf/" + "a" * 32)
         assert res.status_code == 404
+
+    def test_process_with_size_4mm(self, client: TestClient) -> None:
+        """POST /api/process with size=4 returns columns=50, rows=65. AC2.4."""
+        data = _make_jpeg_bytes(800, 600)
+        upload_res = client.post("/api/upload", files={"file": ("test.jpg", data, "image/jpeg")})
+        image_id = upload_res.json()["image_id"]
+        crop_res = client.post(
+            "/api/crop",
+            json={"image_id": image_id, "x": 50, "y": 50, "width": 600, "height": 400},
+        )
+        cropped_id = crop_res.json()["cropped_image_id"]
+
+        process_res = client.post(
+            "/api/process",
+            json={"cropped_image_id": cropped_id, "num_colors": 12, "size": 4},
+        )
+        assert process_res.status_code == 200
+        body = process_res.json()
+        assert body["columns"] == 50
+        assert body["rows"] == 65
+        assert body["component_size_mm"] == 4.0
+
+    def test_process_with_size_5mm(self, client: TestClient) -> None:
+        """POST /api/process with size=5 returns columns=40, rows=52. AC2.4."""
+        data = _make_jpeg_bytes(800, 600)
+        upload_res = client.post("/api/upload", files={"file": ("test.jpg", data, "image/jpeg")})
+        image_id = upload_res.json()["image_id"]
+        crop_res = client.post(
+            "/api/crop",
+            json={"image_id": image_id, "x": 50, "y": 50, "width": 600, "height": 400},
+        )
+        cropped_id = crop_res.json()["cropped_image_id"]
+
+        process_res = client.post(
+            "/api/process",
+            json={"cropped_image_id": cropped_id, "num_colors": 12, "size": 5},
+        )
+        assert process_res.status_code == 200
+        body = process_res.json()
+        assert body["columns"] == 40
+        assert body["rows"] == 52
+        assert body["component_size_mm"] == 5.0
+
+    def test_process_default_size(self, client: TestClient) -> None:
+        """POST /api/process without size defaults to 3mm (60x80). AC2.3."""
+        data = _make_jpeg_bytes(800, 600)
+        upload_res = client.post("/api/upload", files={"file": ("test.jpg", data, "image/jpeg")})
+        image_id = upload_res.json()["image_id"]
+        crop_res = client.post(
+            "/api/crop",
+            json={"image_id": image_id, "x": 50, "y": 50, "width": 600, "height": 400},
+        )
+        cropped_id = crop_res.json()["cropped_image_id"]
+
+        process_res = client.post(
+            "/api/process",
+            json={"cropped_image_id": cropped_id, "num_colors": 12},
+        )
+        assert process_res.status_code == 200
+        body = process_res.json()
+        assert body["columns"] == 60
+        assert body["rows"] == 80
+        assert body["component_size_mm"] == 3.0
+
+    def test_process_invalid_size(self, client: TestClient) -> None:
+        """POST /api/process with size=7 returns 422 validation error. AC2.3."""
+        data = _make_jpeg_bytes(800, 600)
+        upload_res = client.post("/api/upload", files={"file": ("test.jpg", data, "image/jpeg")})
+        image_id = upload_res.json()["image_id"]
+        crop_res = client.post(
+            "/api/crop",
+            json={"image_id": image_id, "x": 50, "y": 50, "width": 600, "height": 400},
+        )
+        cropped_id = crop_res.json()["cropped_image_id"]
+
+        process_res = client.post(
+            "/api/process",
+            json={"cropped_image_id": cropped_id, "num_colors": 12, "size": 7},
+        )
+        assert process_res.status_code == 422

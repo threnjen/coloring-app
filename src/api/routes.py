@@ -24,9 +24,7 @@ from src.api.schemas import UploadResponse
 from src.config import MAX_IMAGE_DIMENSION
 from src.config import MAX_UPLOAD_SIZE_BYTES
 from src.config import MIN_CROP_PIXELS
-from src.config import COMPONENT_SIZE_MM
-from src.config import GRID_COLUMNS
-from src.config import GRID_ROWS
+from src.config import GRID_DIMENSIONS
 from src.config import TEMP_DIR
 from src.models.mosaic import MosaicSheet
 from src.processing.enhancement import ImageEnhancer
@@ -225,13 +223,22 @@ async def crop_image(req: CropRequest) -> CropResponse:
     return CropResponse(cropped_image_id=cropped_id, width=cropped.width, height=cropped.height)
 
 
-def _run_pipeline(img: Image.Image, num_colors: int) -> tuple[MosaicSheet, Image.Image, list[dict]]:
+def _run_pipeline(
+    img: Image.Image, num_colors: int, size: int = 3
+) -> tuple[MosaicSheet, Image.Image, list[dict]]:
     """Run the CPU-intensive processing pipeline synchronously.
+
+    Args:
+        img: Input image.
+        num_colors: Number of colors for quantization.
+        size: Component size in mm (3, 4, or 5).
 
     Returns:
         Tuple of (mosaic_sheet, preview_image, palette_info).
     """
     t0 = time.monotonic()
+
+    columns, rows = GRID_DIMENSIONS[(size, "square")]
 
     # Enhance
     enhancer = ImageEnhancer()
@@ -246,7 +253,7 @@ def _run_pipeline(img: Image.Image, num_colors: int) -> tuple[MosaicSheet, Image
     logger.info("Quantization: %.2fs", t2 - t1)
 
     # Generate grid
-    generator = GridGenerator(columns=GRID_COLUMNS, rows=GRID_ROWS)
+    generator = GridGenerator(columns=columns, rows=rows)
     grid = generator.generate(label_map, palette)
     t3 = time.monotonic()
     logger.info("Grid generation: %.2fs", t3 - t2)
@@ -257,9 +264,9 @@ def _run_pipeline(img: Image.Image, num_colors: int) -> tuple[MosaicSheet, Image
         mosaic_id=mosaic_id,
         grid=grid,
         palette=palette,
-        columns=GRID_COLUMNS,
-        rows=GRID_ROWS,
-        component_size_mm=COMPONENT_SIZE_MM,
+        columns=columns,
+        rows=rows,
+        component_size_mm=float(size),
     )
 
     # Render preview
@@ -291,7 +298,9 @@ async def process_image(req: ProcessRequest) -> ProcessResponse:
 
     img = _load_stored_image(req.cropped_image_id)
 
-    sheet, preview_img, palette_info = await asyncio.to_thread(_run_pipeline, img, req.num_colors)
+    sheet, preview_img, palette_info = await asyncio.to_thread(
+        _run_pipeline, img, req.num_colors, req.size
+    )
 
     _mosaic_store[sheet.mosaic_id] = sheet
     while len(_mosaic_store) > _MAX_MOSAIC_STORE:
@@ -306,8 +315,9 @@ async def process_image(req: ProcessRequest) -> ProcessResponse:
     return ProcessResponse(
         mosaic_id=sheet.mosaic_id,
         num_colors=sheet.palette.count,
-        columns=GRID_COLUMNS,
-        rows=GRID_ROWS,
+        columns=sheet.columns,
+        rows=sheet.rows,
+        component_size_mm=sheet.component_size_mm,
         palette=palette_info,
     )
 
