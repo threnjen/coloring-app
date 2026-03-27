@@ -220,7 +220,9 @@ async def crop_image(req: CropRequest) -> CropResponse:
         cropped.height,
         time.monotonic() - t0,
     )
-    return CropResponse(cropped_image_id=cropped_id, width=cropped.width, height=cropped.height)
+    return CropResponse(
+        cropped_image_id=cropped_id, width=cropped.width, height=cropped.height
+    )
 
 
 def _run_pipeline(
@@ -294,7 +296,9 @@ def _run_pipeline(
 async def process_image(req: ProcessRequest) -> ProcessResponse:
     """Run the full processing pipeline: enhance → quantize → grid → preview."""
     _validate_id(req.cropped_image_id, "cropped image ID")
-    logger.info("Processing image %s with %d colors", req.cropped_image_id, req.num_colors)
+    logger.info(
+        "Processing image %s with %d colors", req.cropped_image_id, req.num_colors
+    )
 
     img = _load_stored_image(req.cropped_image_id)
 
@@ -328,7 +332,9 @@ async def get_preview(mosaic_id: str) -> Response:
     _validate_id(mosaic_id, "mosaic ID")
     preview_path = _get_image_dir(mosaic_id) / "preview.png"
     if not preview_path.exists():
-        raise HTTPException(status_code=404, detail=f"Preview for '{mosaic_id}' not found")
+        raise HTTPException(
+            status_code=404, detail=f"Preview for '{mosaic_id}' not found"
+        )
     return Response(
         content=preview_path.read_bytes(),
         media_type="image/png",
@@ -351,5 +357,7 @@ async def get_pdf(mosaic_id: str) -> Response:
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="mosaic-{mosaic_id[:8]}.pdf"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="mosaic-{mosaic_id[:8]}.pdf"'
+        },
     )

@@ -50,9 +50,9 @@ class ImageEnhancer:
         lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
         l_channel = lab[:, :, 0].astype(np.float32)
         mean_l = l_channel.mean()
-        l_channel = np.clip(mean_l + self._contrast_factor * (l_channel - mean_l), 0, 255).astype(
-            np.uint8
-        )
+        l_channel = np.clip(
+            mean_l + self._contrast_factor * (l_channel - mean_l), 0, 255
+        ).astype(np.uint8)
         lab[:, :, 0] = l_channel
         return cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
 

@@ -15,7 +15,9 @@ class TestGridGenerator:
         """Given a label map, grid is 60 columns × 80 rows at 3mm."""
         label_map = np.random.default_rng(42).integers(0, 8, size=(800, 600))
         palette = ColorPalette(
-            colors_rgb=np.random.default_rng(42).integers(0, 255, size=(8, 3), dtype=np.uint8)
+            colors_rgb=np.random.default_rng(42).integers(
+                0, 255, size=(8, 3), dtype=np.uint8
+            )
         )
         generator = GridGenerator(columns=60, rows=80)
         grid = generator.generate(label_map, palette)
@@ -27,7 +29,9 @@ class TestGridGenerator:
         """Every cell must have a valid single-character label."""
         label_map = np.random.default_rng(42).integers(0, 12, size=(800, 600))
         palette = ColorPalette(
-            colors_rgb=np.random.default_rng(42).integers(0, 255, size=(12, 3), dtype=np.uint8)
+            colors_rgb=np.random.default_rng(42).integers(
+                0, 255, size=(12, 3), dtype=np.uint8
+            )
         )
         generator = GridGenerator(columns=60, rows=80)
         grid = generator.generate(label_map, palette)
@@ -41,7 +45,9 @@ class TestGridGenerator:
         """Given 8 colors, labels are 0–7."""
         label_map = np.random.default_rng(42).integers(0, 8, size=(130, 100))
         palette = ColorPalette(
-            colors_rgb=np.random.default_rng(42).integers(0, 255, size=(8, 3), dtype=np.uint8)
+            colors_rgb=np.random.default_rng(42).integers(
+                0, 255, size=(8, 3), dtype=np.uint8
+            )
         )
         generator = GridGenerator(columns=10, rows=13)
         grid = generator.generate(label_map, palette)
@@ -53,7 +59,9 @@ class TestGridGenerator:
         """Given 20 colors, labels are 0–9, A–J — all single character."""
         label_map = np.random.default_rng(42).integers(0, 20, size=(130, 100))
         palette = ColorPalette(
-            colors_rgb=np.random.default_rng(42).integers(0, 255, size=(20, 3), dtype=np.uint8)
+            colors_rgb=np.random.default_rng(42).integers(
+                0, 255, size=(20, 3), dtype=np.uint8
+            )
         )
         generator = GridGenerator(columns=10, rows=13)
         grid = generator.generate(label_map, palette)
@@ -79,7 +87,9 @@ class TestGridGenerator:
         """Given a label map, grid is 50 columns × 65 rows at 4mm. AC2.4."""
         label_map = np.random.default_rng(42).integers(0, 8, size=(650, 500))
         palette = ColorPalette(
-            colors_rgb=np.random.default_rng(42).integers(0, 255, size=(8, 3), dtype=np.uint8)
+            colors_rgb=np.random.default_rng(42).integers(
+                0, 255, size=(8, 3), dtype=np.uint8
+            )
         )
         generator = GridGenerator(columns=50, rows=65)
         grid = generator.generate(label_map, palette)
@@ -91,7 +101,9 @@ class TestGridGenerator:
         """Given a label map, grid is 40 columns × 52 rows at 5mm. AC2.4."""
         label_map = np.random.default_rng(42).integers(0, 8, size=(520, 400))
         palette = ColorPalette(
-            colors_rgb=np.random.default_rng(42).integers(0, 255, size=(8, 3), dtype=np.uint8)
+            colors_rgb=np.random.default_rng(42).integers(
+                0, 255, size=(8, 3), dtype=np.uint8
+            )
         )
         generator = GridGenerator(columns=40, rows=52)
         grid = generator.generate(label_map, palette)
@@ -118,4 +130,6 @@ class TestDimensionLookup:
     def test_dimension_lookup_circle_same_as_square(self) -> None:
         """Circle mode uses same dimensions as square."""
         for size in (3, 4, 5):
-            assert GRID_DIMENSIONS[(size, "circle")] == GRID_DIMENSIONS[(size, "square")]
+            assert (
+                GRID_DIMENSIONS[(size, "circle")] == GRID_DIMENSIONS[(size, "square")]
+            )

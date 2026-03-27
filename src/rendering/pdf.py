@@ -48,7 +48,7 @@ class PdfRenderer:
 
     def _draw_grid_page(self, c: canvas.Canvas, sheet: MosaicSheet) -> None:
         """Draw the numbered grid on page 1."""
-        page_w, page_h = letter
+        _, page_h = letter
         cell_mm = sheet.component_size_mm
         cell_pt = cell_mm * mm
 
@@ -83,7 +83,7 @@ class PdfRenderer:
 
     def _draw_legend_page(self, c: canvas.Canvas, sheet: MosaicSheet) -> None:
         """Draw the color legend on page 2."""
-        page_w, page_h = letter
+        _, page_h = letter
         palette = sheet.palette
 
         c.setFont("Helvetica-Bold", 16)

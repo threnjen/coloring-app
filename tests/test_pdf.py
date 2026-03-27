@@ -13,18 +13,25 @@ from src.rendering.pdf import PdfRenderer
 
 
 def _make_sheet(
-    n_colors: int = 12, columns: int = 60, rows: int = 80, component_size_mm: float = 3.0
+    n_colors: int = 12,
+    columns: int = 60,
+    rows: int = 80,
+    component_size_mm: float = 3.0,
 ) -> MosaicSheet:
     """Helper to build a MosaicSheet for testing."""
     palette = ColorPalette(
-        colors_rgb=np.random.default_rng(42).integers(0, 255, size=(n_colors, 3), dtype=np.uint8)
+        colors_rgb=np.random.default_rng(42).integers(
+            0, 255, size=(n_colors, 3), dtype=np.uint8
+        )
     )
     grid = []
     for r in range(rows):
         row_cells = []
         for c in range(columns):
             idx = (r * columns + c) % n_colors
-            row_cells.append(GridCell(row=r, col=c, color_index=idx, label=palette.label(idx)))
+            row_cells.append(
+                GridCell(row=r, col=c, color_index=idx, label=palette.label(idx))
+            )
         grid.append(row_cells)
 
     return MosaicSheet(

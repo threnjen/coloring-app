@@ -23,7 +23,9 @@ def sample_rgb_image() -> Image.Image:
 @pytest.fixture
 def low_contrast_image() -> Image.Image:
     """A 200x150 low-contrast grayscale-ish image."""
-    arr = np.random.default_rng(42).integers(100, 150, size=(150, 200, 3), dtype=np.uint8)
+    arr = np.random.default_rng(42).integers(
+        100, 150, size=(150, 200, 3), dtype=np.uint8
+    )
     return Image.fromarray(arr, "RGB")
 
 

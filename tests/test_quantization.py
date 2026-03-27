@@ -9,7 +9,9 @@ from src.processing.quantization import ColorQuantizer
 class TestColorQuantizer:
     """Tests for the ColorQuantizer class."""
 
-    def test_quantization_returns_requested_colors(self, sample_rgb_image: Image.Image) -> None:
+    def test_quantization_returns_requested_colors(
+        self, sample_rgb_image: Image.Image
+    ) -> None:
         """Given N=12, when quantized, then palette has exactly 12 colors."""
         quantizer = ColorQuantizer(n_colors=12)
         label_map, palette = quantizer.quantize(sample_rgb_image)

@@ -17,7 +17,7 @@ Added component size selector (3mm/4mm/5mm) to the mosaic coloring app. Users ca
 
 | File | Change Type | What Changed | Why |
 |------|-------------|--------------|-----|
-| `src/config.py` | Modified | Added `ComponentSize` IntEnum, `GRID_DIMENSIONS` lookup dict with entries for square/circle/hexagon at 3/4/5mm | AC2.3, AC2.4, AC2.12: central dimension configuration |
+| `src/config.py` | Modified | Added `GRID_DIMENSIONS` lookup dict with entries for square/circle/hexagon at 3/4/5mm | AC2.3, AC2.4, AC2.12: central dimension configuration |
 | `src/api/schemas.py` | Modified | Added `size: int` field to `ProcessRequest` (default=3, ge=3, le=5); added `component_size_mm: float` to `ProcessResponse` | AC2.3: API accepts and returns size |
 | `src/api/routes.py` | Modified | `_run_pipeline` accepts `size` param, looks up dimensions from `GRID_DIMENSIONS`; `process_image` passes `req.size`; response uses sheet dimensions | AC2.4: pipeline uses dynamic dimensions |
 | `src/rendering/pdf.py` | Modified | `_draw_grid_page` calculates margins dynamically from sheet dimensions instead of hardcoded constants | AC2.4: PDF layout adapts to grid size |

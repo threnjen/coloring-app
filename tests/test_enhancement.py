@@ -10,7 +10,9 @@ from src.processing.enhancement import ImageEnhancer
 class TestImageEnhancer:
     """Tests for the ImageEnhancer class."""
 
-    def test_enhancement_increases_contrast(self, low_contrast_image: Image.Image) -> None:
+    def test_enhancement_increases_contrast(
+        self, low_contrast_image: Image.Image
+    ) -> None:
         """Given a low-contrast image, when enhanced, then pixel std dev increases."""
         enhancer = ImageEnhancer(contrast_factor=1.5, saturation_factor=1.0)
         original_std = np.array(low_contrast_image).astype(float).std()
@@ -20,7 +22,9 @@ class TestImageEnhancer:
 
         assert enhanced_std > original_std
 
-    def test_enhancement_increases_saturation(self, sample_rgb_image: Image.Image) -> None:
+    def test_enhancement_increases_saturation(
+        self, sample_rgb_image: Image.Image
+    ) -> None:
         """Given a colored image, when enhanced, then mean saturation in HSV increases."""
         enhancer = ImageEnhancer(contrast_factor=1.0, saturation_factor=1.5)
 
@@ -33,7 +37,9 @@ class TestImageEnhancer:
 
         assert enhanced_sat > original_sat
 
-    def test_enhancement_preserves_dimensions(self, sample_rgb_image: Image.Image) -> None:
+    def test_enhancement_preserves_dimensions(
+        self, sample_rgb_image: Image.Image
+    ) -> None:
         """Enhancement should not change image dimensions."""
         enhancer = ImageEnhancer()
         enhanced = enhancer.enhance(sample_rgb_image)
