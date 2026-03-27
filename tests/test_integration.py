@@ -340,3 +340,8 @@ class TestFullPipeline:
         assert original_res.headers["content-type"] == "image/png"
 
         assert enhanced_res.content != original_res.content
+
+    def test_original_preview_not_found(self, client: TestClient) -> None:
+        """Original preview for non-existent mosaic returns 404."""
+        res = client.get("/api/preview/" + "a" * 32 + "/original")
+        assert res.status_code == 404

@@ -52,13 +52,14 @@ class ImageEnhancer:
         """Boost saturation using a curve that gives diminishing returns at high S."""
         hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV).astype(np.float32)
         s = hsv[:, :, 1]
-        hsv[:, :, 1] = np.clip(s + self._SATURATION_BOOST * s * (1.0 - s / 255.0), 0, 255)
+        hsv[:, :, 1] = np.clip(
+            s + self._SATURATION_BOOST * s * (1.0 - s / 255.0), 0, 255
+        )
         return cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2RGB)
 
     def _sharpen(self, img: np.ndarray) -> np.ndarray:
         """Edge-aware sharpening via bilateral filter + unsharp mask."""
         bilateral = cv2.bilateralFilter(img, d=9, sigmaColor=75, sigmaSpace=75)
-        sharpened = img.astype(np.float32) + self._SHARPEN_ALPHA * (
-            img.astype(np.float32) - bilateral.astype(np.float32)
-        )
+        img_f = img.astype(np.float32)
+        sharpened = img_f + self._SHARPEN_ALPHA * (img_f - bilateral.astype(np.float32))
         return np.clip(sharpened, 0, 255).astype(np.uint8)

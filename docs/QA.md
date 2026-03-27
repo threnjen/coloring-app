@@ -55,8 +55,6 @@ FastAPI's auto-generated API documentation is available at:
 | `COLORING_TEMP_DIR` | system temp dir | Base directory for temporary files |
 | `TEMP_TTL_SECONDS` | `3600` | How long temp files are kept (seconds) |
 | `TEMP_CLEANUP_INTERVAL_SECONDS` | `300` | How often cleanup runs (seconds) |
-| `CONTRAST_FACTOR` | `1.3` | Image contrast enhancement multiplier |
-| `SATURATION_FACTOR` | `1.3` | Image saturation enhancement multiplier |
 
 ---
 

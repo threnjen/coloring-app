@@ -227,6 +227,11 @@ header h1 {
     width: 100%;
 }
 
+/* --- Preview toggle --- */
+.preview-toggle {
+    margin-bottom: 16px;
+}
+
 /* --- Palette --- */
 .palette-display {
     display: flex;
