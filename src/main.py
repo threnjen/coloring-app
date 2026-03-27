@@ -2,15 +2,20 @@
 
 import asyncio
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response as StarletteResponse
 
 from src.api.routes import router
-from src.config import TEMP_CLEANUP_INTERVAL_SECONDS, TEMP_DIR, TEMP_TTL_SECONDS
+from src.config import TEMP_CLEANUP_INTERVAL_SECONDS, TEMP_DIR, TEMP_TTL_SECONDS, validate_config
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,6 +46,7 @@ async def _cleanup_temp_files() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Create temp directory on startup; run cleanup task in background."""
+    validate_config()
     TEMP_DIR.mkdir(parents=True, exist_ok=True)
     logger.info("Temp directory: %s", TEMP_DIR)
     cleanup_task = asyncio.create_task(_cleanup_temp_files())
@@ -52,7 +58,34 @@ async def lifespan(app: FastAPI):
         pass
 
 
+class CSPMiddleware(BaseHTTPMiddleware):
+    """Add Content-Security-Policy header to all responses."""
+
+    async def dispatch(self, request: Request, call_next):
+        response: StarletteResponse = await call_next(request)
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
+            "img-src 'self' data: blob:; "
+            "font-src 'self'"
+        )
+        return response
+
+
 app = FastAPI(title="Mosaic Coloring App", version="0.1.0", lifespan=lifespan)
+
+# AC8: CORS middleware with explicit origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:8000")],
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
+
+# AC9: Content-Security-Policy header
+app.add_middleware(CSPMiddleware)
+
 app.include_router(router, prefix="/api")
 
 static_dir = Path(__file__).resolve().parent.parent / "static"

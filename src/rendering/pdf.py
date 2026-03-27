@@ -10,6 +10,7 @@ from reportlab.pdfgen import canvas
 
 from src.config import PAPER_HEIGHT_MM, PAPER_WIDTH_MM
 from src.models.mosaic import ColorPalette, GridCell, MosaicSheet
+from src.rendering.color_utils import perceived_brightness
 from src.rendering.geometry import hex_vertices
 
 logger = logging.getLogger(__name__)
@@ -151,7 +152,7 @@ class PdfRenderer:
         c.setStrokeColorRGB(r, g, b)
         c.circle(cx, cy, radius, fill=1, stroke=0)
 
-        brightness = 0.299 * r + 0.587 * g + 0.114 * b
+        brightness = perceived_brightness(r, g, b)
         label_val = 0.0 if brightness >= 0.5 else 1.0
         c.setFillColorRGB(label_val, label_val, label_val)
         c.setFont(font_name, font_size)
@@ -191,7 +192,7 @@ class PdfRenderer:
         path.close()
         c.drawPath(path, fill=1, stroke=0)
 
-        brightness = 0.299 * r + 0.587 * g + 0.114 * b
+        brightness = perceived_brightness(r, g, b)
         label_val = 0.0 if brightness >= 0.5 else 1.0
         c.setFillColorRGB(label_val, label_val, label_val)
         c.setFont(font_name, font_size)

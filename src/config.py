@@ -4,11 +4,23 @@ import os
 import tempfile
 from pathlib import Path
 
+
+def _parse_int_env(name: str, default: str) -> int:
+    """Parse an integer environment variable with a clear error on failure."""
+    raw = os.getenv(name, default)
+    try:
+        return int(raw)
+    except (ValueError, TypeError) as exc:
+        raise ValueError(
+            f"Environment variable {name}={raw!r} is not a valid integer"
+        ) from exc
+
+
 # --- Upload ---
-MAX_UPLOAD_SIZE_MB: int = int(os.getenv("MAX_UPLOAD_SIZE_MB", "20"))
+MAX_UPLOAD_SIZE_MB: int = _parse_int_env("MAX_UPLOAD_SIZE_MB", "20")
 MAX_UPLOAD_SIZE_BYTES: int = MAX_UPLOAD_SIZE_MB * 1024 * 1024
 ALLOWED_MIME_TYPES: set[str] = {"image/jpeg", "image/png"}
-MAX_IMAGE_DIMENSION: int = int(os.getenv("MAX_IMAGE_DIMENSION", "4000"))
+MAX_IMAGE_DIMENSION: int = _parse_int_env("MAX_IMAGE_DIMENSION", "4000")
 MIN_CROP_PIXELS: int = 50
 
 # --- Color ---
@@ -43,10 +55,10 @@ PAPER_WIDTH_MM: float = 215.9
 PAPER_HEIGHT_MM: float = 279.4
 PRINTABLE_WIDTH_MM: float = (
     GRID_COLUMNS * COMPONENT_SIZE_MM
-)  # 180mm (with ~17.95mm side margins)
+)  # Default 3mm: 180mm (margins vary by size/mode)
 PRINTABLE_HEIGHT_MM: float = (
     GRID_ROWS * COMPONENT_SIZE_MM
-)  # 240mm (with ~19.7mm top/bottom margins)
+)  # Default 3mm: 240mm (margins vary by size/mode)
 MARGIN_SIDE_MM: float = (PAPER_WIDTH_MM - PRINTABLE_WIDTH_MM) / 2
 MARGIN_TOP_MM: float = (PAPER_HEIGHT_MM - PRINTABLE_HEIGHT_MM) / 2
 
@@ -54,7 +66,25 @@ MARGIN_TOP_MM: float = (PAPER_HEIGHT_MM - PRINTABLE_HEIGHT_MM) / 2
 TEMP_DIR: Path = (
     Path(os.getenv("COLORING_TEMP_DIR", tempfile.gettempdir())) / "coloring-app"
 )
-TEMP_TTL_SECONDS: int = int(os.getenv("TEMP_TTL_SECONDS", "3600"))
-TEMP_CLEANUP_INTERVAL_SECONDS: int = int(
-    os.getenv("TEMP_CLEANUP_INTERVAL_SECONDS", "300")
+TEMP_TTL_SECONDS: int = _parse_int_env("TEMP_TTL_SECONDS", "3600")
+TEMP_CLEANUP_INTERVAL_SECONDS: int = _parse_int_env(
+    "TEMP_CLEANUP_INTERVAL_SECONDS", "300"
 )
+
+
+def validate_config() -> None:
+    """Validate configuration at startup. Raises ValueError on problems."""
+    if MAX_UPLOAD_SIZE_MB <= 0:
+        raise ValueError("MAX_UPLOAD_SIZE_MB must be positive")
+    if MAX_IMAGE_DIMENSION <= 0:
+        raise ValueError("MAX_IMAGE_DIMENSION must be positive")
+    if TEMP_TTL_SECONDS <= 0:
+        raise ValueError("TEMP_TTL_SECONDS must be positive")
+    if TEMP_CLEANUP_INTERVAL_SECONDS <= 0:
+        raise ValueError("TEMP_CLEANUP_INTERVAL_SECONDS must be positive")
+    # Verify TEMP_DIR parent is writable
+    temp_parent = TEMP_DIR.parent
+    if not temp_parent.exists():
+        raise ValueError(f"TEMP_DIR parent does not exist: {temp_parent}")
+    if not os.access(temp_parent, os.W_OK):
+        raise ValueError(f"TEMP_DIR parent is not writable: {temp_parent}")

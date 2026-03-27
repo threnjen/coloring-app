@@ -52,7 +52,7 @@ class ColorQuantizer:
         centers_lab = kmeans.cluster_centers_
 
         # Convert cluster centers back to RGB
-        centers_lab_img = centers_lab.reshape(1, -1, 3).astype(np.uint8)
+        centers_lab_img = centers_lab.reshape(1, -1, 3).round().astype(np.uint8)
         centers_rgb_img = cv2.cvtColor(centers_lab_img, cv2.COLOR_LAB2RGB)
         centers_rgb = centers_rgb_img.reshape(-1, 3)
 

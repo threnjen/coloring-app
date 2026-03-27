@@ -9,7 +9,7 @@ def _make_palette(n: int = 5) -> ColorPalette:
     """Create a palette with n distinct colors."""
     rng = np.random.default_rng(42)
     colors = rng.integers(0, 255, size=(n, 3), dtype=np.uint8)
-    return ColorPalette(colors_rgb=colors.astype(np.float64))
+    return ColorPalette(colors_rgb=colors)
 
 
 def _make_sheet(palette: ColorPalette, rows: int = 4, cols: int = 4) -> MosaicSheet:
@@ -39,7 +39,7 @@ class TestColorSwapUpdatesPalette:
         """Updating colors_rgb[i] changes the palette color at that index."""
         palette = _make_palette(5)
         old_color = palette.colors_rgb[2].copy()
-        new_rgb = np.array([255, 0, 128], dtype=np.float64)
+        new_rgb = np.array([255, 0, 128], dtype=np.uint8)
 
         palette.colors_rgb[2] = new_rgb
 
@@ -99,7 +99,7 @@ class TestSimilarColorWarning:
                     [0, 0, 255],  # index 2: blue
                     [250, 5, 0],  # index 3: very similar to red (index 0)
                 ],
-                dtype=np.float64,
+                dtype=np.uint8,
             )
         )
         # Editing index 3 to a color very similar to index 0
@@ -120,7 +120,7 @@ class TestSimilarColorWarning:
                     [0, 255, 0],
                     [0, 0, 255],
                 ],
-                dtype=np.float64,
+                dtype=np.uint8,
             )
         )
         warnings = _compute_palette_warnings(palette, color_index=0)
@@ -141,7 +141,7 @@ class TestDuplicateColorWarning:
                     [0, 0, 0],
                     [100, 200, 50],  # duplicate of index 0
                 ],
-                dtype=np.float64,
+                dtype=np.uint8,
             )
         )
         warnings = _compute_palette_warnings(palette, color_index=2)

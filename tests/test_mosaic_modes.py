@@ -7,27 +7,7 @@ import pytest
 
 from src.models.mosaic import ColorPalette, GridCell, MosaicSheet
 from src.rendering.preview import PreviewRenderer
-
-
-def _make_grid(
-    n_colors: int, columns: int, rows: int
-) -> tuple[list[list[GridCell]], ColorPalette]:
-    """Build a simple grid and palette for testing."""
-    palette = ColorPalette(
-        colors_rgb=np.random.default_rng(42).integers(
-            0, 255, size=(n_colors, 3), dtype=np.uint8
-        )
-    )
-    grid = []
-    for r in range(rows):
-        row_cells = []
-        for c in range(columns):
-            idx = (r * columns + c) % n_colors
-            row_cells.append(
-                GridCell(row=r, col=c, color_index=idx, label=palette.label(idx))
-            )
-        grid.append(row_cells)
-    return grid, palette
+from tests.conftest import make_grid
 
 
 def _make_sheet(
@@ -38,7 +18,7 @@ def _make_sheet(
     mode: str = "square",
 ) -> MosaicSheet:
     """Build a MosaicSheet for testing."""
-    grid, palette = _make_grid(n_colors, columns, rows)
+    grid, palette = make_grid(n_colors, columns, rows)
     return MosaicSheet(
         mosaic_id="test-modes",
         grid=grid,
@@ -68,7 +48,7 @@ class TestCirclePreview:
 
     def test_circle_preview_has_black_gaps(self) -> None:
         """Circle preview: inter-cell space should be black (0,0,0)."""
-        grid, palette = _make_grid(n_colors=4, columns=5, rows=5)
+        grid, palette = make_grid(n_colors=4, columns=5, rows=5)
         renderer = PreviewRenderer(cell_size=20)
         img = renderer.render(grid, palette, mode="circle")
         pixels = np.array(img)
@@ -82,7 +62,7 @@ class TestCirclePreview:
 
     def test_circle_preview_cell_is_round(self) -> None:
         """Circle preview: center of cell should have palette color, not black."""
-        grid, palette = _make_grid(n_colors=4, columns=5, rows=5)
+        grid, palette = make_grid(n_colors=4, columns=5, rows=5)
         renderer = PreviewRenderer(cell_size=20)
         img = renderer.render(grid, palette, mode="circle")
         pixels = np.array(img)
@@ -101,7 +81,7 @@ class TestHexagonPreview:
 
     def test_hexagon_preview_has_black_gaps(self) -> None:
         """Hexagon preview: inter-cell space should be black."""
-        grid, palette = _make_grid(n_colors=4, columns=5, rows=5)
+        grid, palette = make_grid(n_colors=4, columns=5, rows=5)
         renderer = PreviewRenderer(cell_size=20)
         img = renderer.render(grid, palette, mode="hexagon")
         pixels = np.array(img)
@@ -115,7 +95,7 @@ class TestHexagonPreview:
 
     def test_hexagon_odd_row_offset(self) -> None:
         """Hexagon preview: odd row cells should be offset by half a column."""
-        grid, palette = _make_grid(n_colors=4, columns=5, rows=4)
+        grid, palette = make_grid(n_colors=4, columns=5, rows=4)
         renderer = PreviewRenderer(cell_size=20)
         img = renderer.render(grid, palette, mode="hexagon")
         pixels = np.array(img)

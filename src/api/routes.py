@@ -91,8 +91,17 @@ def _load_image(data: bytes) -> Image.Image:
 
     Returns:
         PIL Image in RGB mode.
+
+    Raises:
+        HTTPException: If the image data is corrupt or unreadable.
     """
-    img = Image.open(BytesIO(data))
+    try:
+        img = Image.open(BytesIO(data))
+        img.load()  # Force decode to catch truncated/corrupt data
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400, detail=f"Could not read image: {exc}"
+        ) from exc
     if img.mode == "RGBA":
         background = Image.new("RGB", img.size, (255, 255, 255))
         background.paste(img, mask=img.split()[3])
@@ -120,7 +129,13 @@ def _resize_if_needed(img: Image.Image) -> Image.Image:
 
 
 def _get_image_dir(image_id: str) -> Path:
-    """Get the temp directory for an image ID."""
+    """Get the temp directory for an image ID.
+
+    Raises:
+        ValueError: If image_id is not a valid hex UUID.
+    """
+    if not _UUID_HEX_RE.match(image_id):
+        raise ValueError(f"Invalid image ID: {image_id!r}")
     return TEMP_DIR / image_id
 
 
@@ -247,7 +262,13 @@ def _run_pipeline(
     """
     t0 = time.monotonic()
 
-    columns, rows = GRID_DIMENSIONS[(size, mode)]
+    try:
+        columns, rows = GRID_DIMENSIONS[(size, mode)]
+    except KeyError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported size/mode combination: size={size}, mode={mode}",
+        )
 
     # Enhance — keep the pre-enhancement crop for before/after comparison
     pre_enhance_img = img.copy()
@@ -399,28 +420,28 @@ def _compute_palette_warnings(palette: ColorPalette, color_index: int) -> list[s
     """
 
     warnings: list[str] = []
-    new_rgb = palette.colors_rgb[color_index]
+    new_rgb = np.asarray(palette.colors_rgb[color_index], dtype=np.uint8)
 
     # Check exact duplicate first
     for i in range(palette.count):
         if i == color_index:
             continue
-        if np.array_equal(new_rgb, palette.colors_rgb[i]):
+        other_rgb = np.asarray(palette.colors_rgb[i], dtype=np.uint8)
+        if np.array_equal(new_rgb, other_rgb):
             warnings.append(f"This color is already used as label {palette.label(i)}")
 
-    # Check LAB similarity
-    new_bgr = np.array([[new_rgb[::-1]]], dtype=np.uint8)
-    new_lab = cv2.cvtColor(new_bgr, cv2.COLOR_BGR2LAB).astype(np.float64)[0, 0]
+    # Check LAB similarity — batch all colors into one conversion
+    all_rgb = np.asarray(palette.colors_rgb, dtype=np.uint8)
+    all_bgr = all_rgb[:, ::-1].reshape(1, -1, 3)
+    all_lab = cv2.cvtColor(all_bgr, cv2.COLOR_BGR2LAB).astype(np.float64).reshape(-1, 3)
+    new_lab = all_lab[color_index]
 
     for i in range(palette.count):
         if i == color_index:
             continue
-        other_bgr = np.array([[palette.colors_rgb[i][::-1]]], dtype=np.uint8)
-        other_lab = cv2.cvtColor(other_bgr, cv2.COLOR_BGR2LAB).astype(np.float64)[0, 0]
-        dist = np.linalg.norm(new_lab - other_lab)
-        if dist < _MIN_LAB_DISTANCE and not np.array_equal(
-            new_rgb, palette.colors_rgb[i]
-        ):
+        other_rgb = np.asarray(palette.colors_rgb[i], dtype=np.uint8)
+        dist = np.linalg.norm(new_lab - all_lab[i])
+        if dist < _MIN_LAB_DISTANCE and not np.array_equal(new_rgb, other_rgb):
             warnings.append(
                 f"Color {palette.label(color_index)} is very similar to "
                 f"{palette.label(i)} — they may be hard to distinguish"
@@ -459,7 +480,7 @@ async def edit_palette(req: PaletteEditRequest) -> PaletteEditResponse:
     hex_str = req.new_color.lstrip("#")
     new_rgb = np.array(
         [int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16)],
-        dtype=np.float64,
+        dtype=np.uint8,
     )
 
     # Update palette in-place

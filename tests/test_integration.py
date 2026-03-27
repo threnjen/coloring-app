@@ -7,40 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from src.main import app
-
-
-@pytest.fixture
-def client():
-    """FastAPI test client."""
-    return TestClient(app)
-
-
-def _make_jpeg_bytes(width: int = 400, height: int = 300) -> bytes:
-    """Create a JPEG image in memory."""
-    arr = np.random.default_rng(42).integers(
-        0, 255, size=(height, width, 3), dtype=np.uint8
-    )
-    img = Image.fromarray(arr, "RGB")
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG")
-    return buf.getvalue()
-
-
-def _make_png_bytes(width: int = 400, height: int = 300, mode: str = "RGB") -> bytes:
-    """Create a PNG image in memory."""
-    if mode == "RGBA":
-        arr = np.random.default_rng(42).integers(
-            0, 255, size=(height, width, 4), dtype=np.uint8
-        )
-    else:
-        arr = np.random.default_rng(42).integers(
-            0, 255, size=(height, width, 3), dtype=np.uint8
-        )
-    img = Image.fromarray(arr, mode)
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    return buf.getvalue()
+from tests.conftest import make_jpeg_bytes, make_png_bytes
 
 
 class TestUpload:
@@ -48,7 +15,7 @@ class TestUpload:
 
     def test_upload_valid_jpeg(self, client: TestClient) -> None:
         """Upload a valid JPEG succeeds."""
-        data = _make_jpeg_bytes()
+        data = make_jpeg_bytes()
         res = client.post(
             "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
         )
@@ -60,7 +27,7 @@ class TestUpload:
 
     def test_upload_valid_png(self, client: TestClient) -> None:
         """Upload a valid PNG succeeds."""
-        data = _make_png_bytes()
+        data = make_png_bytes()
         res = client.post(
             "/api/upload", files={"file": ("test.png", data, "image/png")}
         )
@@ -91,7 +58,7 @@ class TestCrop:
 
     def test_crop_valid_region(self, client: TestClient) -> None:
         """Crop a valid region succeeds."""
-        data = _make_jpeg_bytes(400, 300)
+        data = make_jpeg_bytes(400, 300)
         upload_res = client.post(
             "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
         )
@@ -108,7 +75,7 @@ class TestCrop:
 
     def test_crop_too_small(self, client: TestClient) -> None:
         """Crop region < 50px returns 400."""
-        data = _make_jpeg_bytes(400, 300)
+        data = make_jpeg_bytes(400, 300)
         upload_res = client.post(
             "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
         )
@@ -122,7 +89,7 @@ class TestCrop:
 
     def test_crop_out_of_bounds(self, client: TestClient) -> None:
         """Crop region exceeding image bounds returns 400."""
-        data = _make_jpeg_bytes(400, 300)
+        data = make_jpeg_bytes(400, 300)
         upload_res = client.post(
             "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
         )
@@ -147,7 +114,7 @@ class TestFullPipeline:
     def test_full_pipeline(self, client: TestClient) -> None:
         """Upload → crop → process → preview → PDF all succeed."""
         # Upload
-        data = _make_jpeg_bytes(800, 600)
+        data = make_jpeg_bytes(800, 600)
         upload_res = client.post(
             "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
         )
@@ -188,7 +155,7 @@ class TestFullPipeline:
 
     def test_transparent_png_handling(self, client: TestClient) -> None:
         """Transparent PNG is converted to RGB and processes successfully."""
-        data = _make_png_bytes(400, 300, mode="RGBA")
+        data = make_png_bytes(400, 300, mode="RGBA")
         upload_res = client.post(
             "/api/upload", files={"file": ("test.png", data, "image/png")}
         )
@@ -214,7 +181,7 @@ class TestFullPipeline:
 
     def test_process_with_size_4mm(self, client: TestClient) -> None:
         """POST /api/process with size=4 returns columns=50, rows=65. AC2.4."""
-        data = _make_jpeg_bytes(800, 600)
+        data = make_jpeg_bytes(800, 600)
         upload_res = client.post(
             "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
         )
@@ -239,7 +206,7 @@ class TestFullPipeline:
 
     def test_process_with_size_5mm(self, client: TestClient) -> None:
         """POST /api/process with size=5 returns columns=40, rows=52. AC2.4."""
-        data = _make_jpeg_bytes(800, 600)
+        data = make_jpeg_bytes(800, 600)
         upload_res = client.post(
             "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
         )
@@ -264,7 +231,7 @@ class TestFullPipeline:
 
     def test_process_default_size(self, client: TestClient) -> None:
         """POST /api/process without size defaults to 3mm (60x80). AC2.3."""
-        data = _make_jpeg_bytes(800, 600)
+        data = make_jpeg_bytes(800, 600)
         upload_res = client.post(
             "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
         )
@@ -289,7 +256,7 @@ class TestFullPipeline:
 
     def test_process_invalid_size(self, client: TestClient) -> None:
         """POST /api/process with size=7 returns 422 validation error. AC2.3."""
-        data = _make_jpeg_bytes(800, 600)
+        data = make_jpeg_bytes(800, 600)
         upload_res = client.post(
             "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
         )
@@ -311,7 +278,7 @@ class TestFullPipeline:
     def test_before_after_endpoint(self, client: TestClient) -> None:
         """After processing, /api/preview/{id}/original returns pre-enhancement image
         that differs from the enhanced /api/preview/{id}. AC2.5."""
-        data = _make_jpeg_bytes(400, 300)
+        data = make_jpeg_bytes(400, 300)
         upload_res = client.post(
             "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
         )
