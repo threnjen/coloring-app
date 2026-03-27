@@ -11,7 +11,6 @@ from PIL import Image
 from src.main import app
 from tests.conftest import make_jpeg_bytes
 
-
 # --- AC1: Path traversal defense in depth ---
 
 
@@ -81,9 +80,7 @@ class TestGridDimensionsKeyError:
     def test_process_invalid_size_mode_combo(self, client: TestClient) -> None:
         """Processing with an invalid size returns 422 (schema validation)."""
         data = make_jpeg_bytes(800, 600)
-        upload_res = client.post(
-            "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
-        )
+        upload_res = client.post("/api/upload", files={"file": ("test.jpg", data, "image/jpeg")})
         image_id = upload_res.json()["image_id"]
         crop_res = client.post(
             "/api/crop",
@@ -103,6 +100,20 @@ class TestGridDimensionsKeyError:
         )
         assert res.status_code == 422
 
+    def test_run_pipeline_keyerror_returns_400(self) -> None:
+        """Calling _run_pipeline with an invalid mode raises HTTPException 400."""
+        from fastapi import HTTPException as _HTTPException
+
+        from src.api.routes import _run_pipeline
+
+        img = Image.fromarray(
+            np.random.default_rng(42).integers(0, 255, (100, 100, 3), dtype=np.uint8),
+            "RGB",
+        )
+        with pytest.raises(_HTTPException) as exc_info:
+            _run_pipeline(img, num_colors=8, size=3, mode="nonexistent")
+        assert exc_info.value.status_code == 400
+
 
 # --- AC4: Drop scipy —  np.bincount replacement ---
 
@@ -112,13 +123,11 @@ class TestGridGeneratorNoBincount:
 
     def test_grid_generation_without_scipy(self) -> None:
         """Grid generation works without scipy.stats.mode."""
-        from src.processing.grid import GridGenerator
         from src.models.mosaic import ColorPalette
+        from src.processing.grid import GridGenerator
 
         label_map = np.zeros((80, 60), dtype=np.int32)
-        palette = ColorPalette(
-            colors_rgb=np.array([[255, 0, 0], [0, 255, 0]], dtype=np.uint8)
-        )
+        palette = ColorPalette(colors_rgb=np.array([[255, 0, 0], [0, 255, 0]], dtype=np.uint8))
         gen = GridGenerator(columns=6, rows=8)
         grid = gen.generate(label_map, palette)
         assert len(grid) == 8
@@ -129,6 +138,7 @@ class TestGridGeneratorNoBincount:
     def test_scipy_not_imported_in_grid(self) -> None:
         """The grid module should not import scipy."""
         import importlib
+
         import src.processing.grid as grid_mod
 
         importlib.reload(grid_mod)
@@ -172,9 +182,7 @@ class TestColorPaletteDtype:
                 dtype=np.uint8,
             )
         )
-        grid = [
-            [GridCell(row=0, col=0, color_index=0, label="0")]
-        ]
+        grid = [[GridCell(row=0, col=0, color_index=0, label="0")]]
         sheet = MosaicSheet(
             mosaic_id="c" * 32,
             grid=grid,
@@ -216,9 +224,7 @@ class TestCORSMiddleware:
 
         middleware_types = [type(m) for m in app.user_middleware]
         # Check that CORS is configured (user_middleware stores Middleware objects)
-        has_cors = any(
-            m.cls == CORSMiddleware for m in app.user_middleware
-        )
+        has_cors = any(m.cls == CORSMiddleware for m in app.user_middleware)
         assert has_cors, "CORSMiddleware not found on app"
 
 

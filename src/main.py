@@ -15,7 +15,12 @@ from starlette.requests import Request
 from starlette.responses import Response as StarletteResponse
 
 from src.api.routes import router
-from src.config import TEMP_CLEANUP_INTERVAL_SECONDS, TEMP_DIR, TEMP_TTL_SECONDS, validate_config
+from src.config import (
+    TEMP_CLEANUP_INTERVAL_SECONDS,
+    TEMP_DIR,
+    TEMP_TTL_SECONDS,
+    validate_config,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -78,9 +83,9 @@ app = FastAPI(title="Mosaic Coloring App", version="0.1.0", lifespan=lifespan)
 # AC8: CORS middleware with explicit origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:8000")],
+    allow_origins=os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:8000").split(","),
     allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type"],
 )
 
 # AC9: Content-Security-Policy header
