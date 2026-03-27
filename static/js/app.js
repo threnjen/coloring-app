@@ -160,17 +160,50 @@ processBtn.addEventListener('click', async () => {
         previewImage.src = `/api/preview/${data.mosaic_id}`;
         toggleOriginal.checked = false;
 
-        // Display palette
+        // Display palette (interactive)
         paletteDisplay.innerHTML = '';
-        for (const c of data.palette) {
+        const warningArea = document.getElementById('palette-warnings');
+        if (warningArea) warningArea.textContent = '';
+        data.palette.forEach((c, idx) => {
             const swatch = document.createElement('div');
-            swatch.className = 'palette-swatch';
-            swatch.innerHTML = `
-                <span class="swatch" style="background:${c.hex}"></span>
-                <span>${c.label}</span>
-            `;
+            swatch.className = 'palette-swatch palette-swatch--editable';
+
+            const colorInput = document.createElement('input');
+            colorInput.type = 'color';
+            colorInput.value = c.hex;
+            colorInput.className = 'palette-color-input';
+            colorInput.dataset.confirmed = c.hex;
+
+            const swatchSpan = document.createElement('span');
+            swatchSpan.className = 'swatch';
+            swatchSpan.style.background = c.hex;
+
+            const labelSpan = document.createElement('span');
+            labelSpan.textContent = c.label;
+
+            swatch.appendChild(colorInput);
+            swatch.appendChild(swatchSpan);
+            swatch.appendChild(labelSpan);
+
+            // Click swatch to open picker
+            swatchSpan.addEventListener('click', () => colorInput.click());
+
+            // Debounced color change
+            let debounceTimer = null;
+            colorInput.addEventListener('input', () => {
+                swatchSpan.style.background = colorInput.value;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    _editPaletteColor(data.mosaic_id, idx, colorInput.value);
+                }, 500);
+            });
+            colorInput.addEventListener('change', () => {
+                clearTimeout(debounceTimer);
+                _editPaletteColor(data.mosaic_id, idx, colorInput.value);
+            });
+
             paletteDisplay.appendChild(swatch);
-        }
+        });
 
         showStep(stepPreview);
     } catch (err) {
@@ -188,6 +221,53 @@ toggleOriginal.addEventListener('change', () => {
         ? `/api/preview/${state.mosaicId}/original`
         : `/api/preview/${state.mosaicId}`;
 });
+
+// --- Palette edit ---
+async function _editPaletteColor(mosaicId, colorIndex, hexColor) {
+    // Find the swatch elements for this index so we can revert on failure
+    const swatches = paletteDisplay.querySelectorAll('.palette-swatch--editable');
+    const swatchEl = swatches[colorIndex];
+    const swatchSpan = swatchEl ? swatchEl.querySelector('.swatch') : null;
+    const colorInput = swatchEl ? swatchEl.querySelector('.palette-color-input') : null;
+    const previousColor = colorInput ? colorInput.dataset.confirmed || colorInput.value : hexColor;
+
+    try {
+        const res = await fetch('/api/palette/edit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                mosaic_id: mosaicId,
+                color_index: colorIndex,
+                new_color: hexColor,
+            }),
+        });
+        if (!res.ok) {
+            // Revert optimistic UI update
+            if (swatchSpan) swatchSpan.style.background = previousColor;
+            if (colorInput) colorInput.value = previousColor;
+            return;
+        }
+        const data = await res.json();
+
+        // Store confirmed color for future rollback
+        if (colorInput) colorInput.dataset.confirmed = hexColor;
+
+        // Refresh preview with cache-bust
+        previewImage.src = `/api/preview/${mosaicId}?t=${Date.now()}`;
+
+        // Show warnings
+        const warningArea = document.getElementById('palette-warnings');
+        if (warningArea) {
+            warningArea.textContent = data.warnings.length > 0
+                ? data.warnings.join(' | ')
+                : '';
+        }
+    } catch (err) {
+        // Revert optimistic UI update on network error
+        if (swatchSpan) swatchSpan.style.background = previousColor;
+        if (colorInput) colorInput.value = previousColor;
+    }
+}
 
 // --- Download PDF ---
 downloadBtn.addEventListener('click', () => {

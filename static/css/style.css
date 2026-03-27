@@ -248,6 +248,7 @@ header h1 {
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 0.85rem;
+    position: relative;
 }
 
 .palette-swatch .swatch {
@@ -255,6 +256,33 @@ header h1 {
     height: 20px;
     border-radius: 3px;
     border: 1px solid #ccc;
+}
+
+.palette-swatch--editable .swatch {
+    cursor: pointer;
+}
+
+.palette-swatch--editable:hover {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+}
+
+.palette-color-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* --- Palette warnings --- */
+.palette-warnings {
+    color: #b56a00;
+    font-size: 0.85rem;
+    min-height: 1.2em;
+    margin-bottom: 12px;
 }
 
 /* --- Actions --- */

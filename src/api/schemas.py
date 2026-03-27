@@ -1,8 +1,9 @@
 """Pydantic request/response models for the API."""
 
+import re
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from src.config import MAX_COLORS, MIN_COLORS
 
@@ -60,6 +61,28 @@ class ProcessResponse(BaseModel):
     component_size_mm: float
     mode: MosaicMode
     palette: list[dict]
+
+
+class PaletteEditRequest(BaseModel):
+    """Request to edit a single color in the palette."""
+
+    mosaic_id: str
+    color_index: int = Field(ge=0)
+    new_color: str
+
+    @field_validator("new_color")
+    @classmethod
+    def validate_hex_color(cls, v: str) -> str:
+        if not re.match(r"^#[0-9A-Fa-f]{6}$", v):
+            raise ValueError("new_color must be a hex string like '#FF00AA'")
+        return v.upper()
+
+
+class PaletteEditResponse(BaseModel):
+    """Response after editing a palette color."""
+
+    palette: list[dict]
+    warnings: list[str]
 
 
 class ErrorResponse(BaseModel):

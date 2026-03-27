@@ -10,6 +10,8 @@ from collections import OrderedDict
 from io import BytesIO
 from pathlib import Path
 
+import cv2
+import numpy as np
 from fastapi import APIRouter, HTTPException, UploadFile
 from fastapi.responses import Response
 from PIL import Image
@@ -17,6 +19,8 @@ from PIL import Image
 from src.api.schemas import (
     CropRequest,
     CropResponse,
+    PaletteEditRequest,
+    PaletteEditResponse,
     ProcessRequest,
     ProcessResponse,
     UploadResponse,
@@ -28,7 +32,7 @@ from src.config import (
     MIN_CROP_PIXELS,
     TEMP_DIR,
 )
-from src.models.mosaic import MosaicSheet
+from src.models.mosaic import ColorPalette, MosaicSheet
 from src.processing.enhancement import ImageEnhancer
 from src.processing.grid import GridGenerator
 from src.processing.quantization import ColorQuantizer
@@ -282,16 +286,7 @@ def _run_pipeline(
     t4 = time.monotonic()
     logger.info("Preview rendering: %.2fs", t4 - t3)
 
-    # Build palette info
-    palette_info = []
-    for i in range(palette.count):
-        palette_info.append(
-            {
-                "index": i,
-                "label": palette.label(i),
-                "hex": palette.hex_color(i),
-            }
-        )
+    palette_info = _build_palette_info(palette)
 
     logger.info("Pipeline complete: mosaic_id=%s total=%.2fs", mosaic_id, t4 - t0)
     return sheet, preview_img, palette_info, pre_enhance_img
@@ -384,4 +379,114 @@ async def get_pdf(mosaic_id: str) -> Response:
         headers={
             "Content-Disposition": f'attachment; filename="mosaic-{mosaic_id[:8]}.pdf"'
         },
+    )
+
+
+# --- Palette edit ---
+
+_MIN_LAB_DISTANCE: float = 15.0
+
+
+def _compute_palette_warnings(palette: ColorPalette, color_index: int) -> list[str]:
+    """Check for duplicate or similar colors relative to the edited index.
+
+    Args:
+        palette: The palette (already updated with the new color).
+        color_index: Index of the color that was just edited.
+
+    Returns:
+        List of warning strings (may be empty).
+    """
+
+    warnings: list[str] = []
+    new_rgb = palette.colors_rgb[color_index]
+
+    # Check exact duplicate first
+    for i in range(palette.count):
+        if i == color_index:
+            continue
+        if np.array_equal(new_rgb, palette.colors_rgb[i]):
+            warnings.append(f"This color is already used as label {palette.label(i)}")
+
+    # Check LAB similarity
+    new_bgr = np.array([[new_rgb[::-1]]], dtype=np.uint8)
+    new_lab = cv2.cvtColor(new_bgr, cv2.COLOR_BGR2LAB).astype(np.float64)[0, 0]
+
+    for i in range(palette.count):
+        if i == color_index:
+            continue
+        other_bgr = np.array([[palette.colors_rgb[i][::-1]]], dtype=np.uint8)
+        other_lab = cv2.cvtColor(other_bgr, cv2.COLOR_BGR2LAB).astype(np.float64)[0, 0]
+        dist = np.linalg.norm(new_lab - other_lab)
+        if dist < _MIN_LAB_DISTANCE and not np.array_equal(
+            new_rgb, palette.colors_rgb[i]
+        ):
+            warnings.append(
+                f"Color {palette.label(color_index)} is very similar to "
+                f"{palette.label(i)} — they may be hard to distinguish"
+            )
+
+    return warnings
+
+
+def _build_palette_info(palette: ColorPalette) -> list[dict]:
+    """Build the palette info list for API responses."""
+    return [
+        {"index": i, "label": palette.label(i), "hex": palette.hex_color(i)}
+        for i in range(palette.count)
+    ]
+
+
+@router.post("/palette/edit", response_model=PaletteEditResponse)
+async def edit_palette(req: PaletteEditRequest) -> PaletteEditResponse:
+    """Edit a single color in the palette and re-render the preview."""
+    _validate_id(req.mosaic_id, "mosaic ID")
+
+    sheet = _mosaic_store.get(req.mosaic_id)
+    if sheet is None:
+        raise HTTPException(
+            status_code=404, detail=f"Mosaic '{req.mosaic_id}' not found"
+        )
+
+    palette = sheet.palette
+    if req.color_index >= palette.count:
+        raise HTTPException(
+            status_code=400,
+            detail=f"color_index {req.color_index} out of range [0, {palette.count})",
+        )
+
+    # Parse hex → RGB
+    hex_str = req.new_color.lstrip("#")
+    new_rgb = np.array(
+        [int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16)],
+        dtype=np.float64,
+    )
+
+    # Update palette in-place
+    palette.colors_rgb[req.color_index] = new_rgb
+
+    # Compute warnings
+    warnings = _compute_palette_warnings(palette, req.color_index)
+
+    # Re-render preview (CPU-bound + disk I/O — run off the event loop)
+    def _render_and_save() -> None:
+        renderer = PreviewRenderer()
+        preview_img = renderer.render(sheet.grid, palette, mode=sheet.mode)
+        preview_dir = _get_image_dir(sheet.mosaic_id)
+        preview_dir.mkdir(parents=True, exist_ok=True)
+        preview_img.save(str(preview_dir / "preview.png"), "PNG")
+
+    await asyncio.to_thread(_render_and_save)
+
+    logger.info(
+        "Palette edit: mosaic=%s index=%d new_color=%s warnings=%d",
+        sheet.mosaic_id,
+        req.color_index,
+        req.new_color,
+        len(warnings),
+    )
+
+    return PaletteEditResponse(
+        palette=_build_palette_info(palette),
+        warnings=warnings,
     )
