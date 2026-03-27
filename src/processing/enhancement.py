@@ -1,4 +1,4 @@
-"""Image enhancement: contrast and saturation boost."""
+"""Image enhancement: adaptive contrast, saturation curve, edge-aware sharpening."""
 
 import logging
 
@@ -6,29 +6,22 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from src.config import CONTRAST_FACTOR, SATURATION_FACTOR
-
 logger = logging.getLogger(__name__)
 
 
 class ImageEnhancer:
-    """Applies contrast and saturation enhancement to an image.
+    """Applies adaptive contrast (CLAHE), saturation curve, and edge sharpening.
 
-    Args:
-        contrast_factor: Multiplier for contrast (>1 = more contrast).
-        saturation_factor: Multiplier for saturation (>1 = more vivid).
+    All parameters are class-level constants; no constructor arguments are needed.
     """
 
-    def __init__(
-        self,
-        contrast_factor: float = CONTRAST_FACTOR,
-        saturation_factor: float = SATURATION_FACTOR,
-    ) -> None:
-        self._contrast_factor = contrast_factor
-        self._saturation_factor = saturation_factor
+    _CLAHE_CLIP_LIMIT: float = 2.0
+    _CLAHE_TILE_GRID: tuple[int, int] = (8, 8)
+    _SATURATION_BOOST: float = 0.4
+    _SHARPEN_ALPHA: float = 0.5
 
     def enhance(self, image: Image.Image) -> Image.Image:
-        """Enhance contrast and saturation of an image.
+        """Enhance contrast, saturation, and sharpness of an image.
 
         Args:
             image: PIL Image in RGB mode.
@@ -41,23 +34,31 @@ class ImageEnhancer:
 
         img_array = self._enhance_contrast(img_array)
         img_array = self._enhance_saturation(img_array)
+        img_array = self._sharpen(img_array)
 
         return Image.fromarray(img_array)
 
     def _enhance_contrast(self, img: np.ndarray) -> np.ndarray:
-        """Boost contrast by scaling pixel values around the mean."""
+        """Boost local contrast using CLAHE on the L channel of LAB."""
         lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
-        l_channel = lab[:, :, 0].astype(np.float32)
-        mean_l = l_channel.mean()
-        l_channel = np.clip(
-            mean_l + self._contrast_factor * (l_channel - mean_l), 0, 255
-        ).astype(np.uint8)
-        lab[:, :, 0] = l_channel
+        clahe = cv2.createCLAHE(
+            clipLimit=self._CLAHE_CLIP_LIMIT,
+            tileGridSize=self._CLAHE_TILE_GRID,
+        )
+        lab[:, :, 0] = clahe.apply(lab[:, :, 0])
         return cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
 
     def _enhance_saturation(self, img: np.ndarray) -> np.ndarray:
-        """Boost saturation in HSV color space."""
+        """Boost saturation using a curve that gives diminishing returns at high S."""
         hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV).astype(np.float32)
-        hsv[:, :, 1] = np.clip(hsv[:, :, 1] * self._saturation_factor, 0, 255)
-        hsv = hsv.astype(np.uint8)
-        return cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
+        s = hsv[:, :, 1]
+        hsv[:, :, 1] = np.clip(s + self._SATURATION_BOOST * s * (1.0 - s / 255.0), 0, 255)
+        return cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2RGB)
+
+    def _sharpen(self, img: np.ndarray) -> np.ndarray:
+        """Edge-aware sharpening via bilateral filter + unsharp mask."""
+        bilateral = cv2.bilateralFilter(img, d=9, sigmaColor=75, sigmaSpace=75)
+        sharpened = img.astype(np.float32) + self._SHARPEN_ALPHA * (
+            img.astype(np.float32) - bilateral.astype(np.float32)
+        )
+        return np.clip(sharpened, 0, 255).astype(np.uint8)

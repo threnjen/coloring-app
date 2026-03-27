@@ -307,3 +307,36 @@ class TestFullPipeline:
             json={"cropped_image_id": cropped_id, "num_colors": 12, "size": 7},
         )
         assert process_res.status_code == 422
+
+    def test_before_after_endpoint(self, client: TestClient) -> None:
+        """After processing, /api/preview/{id}/original returns pre-enhancement image
+        that differs from the enhanced /api/preview/{id}. AC2.5."""
+        data = _make_jpeg_bytes(400, 300)
+        upload_res = client.post(
+            "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
+        )
+        assert upload_res.status_code == 200
+        image_id = upload_res.json()["image_id"]
+
+        crop_res = client.post(
+            "/api/crop",
+            json={"image_id": image_id, "x": 0, "y": 0, "width": 400, "height": 300},
+        )
+        assert crop_res.status_code == 200
+        cropped_id = crop_res.json()["cropped_image_id"]
+
+        process_res = client.post(
+            "/api/process",
+            json={"cropped_image_id": cropped_id, "num_colors": 12},
+        )
+        assert process_res.status_code == 200
+        mosaic_id = process_res.json()["mosaic_id"]
+
+        enhanced_res = client.get(f"/api/preview/{mosaic_id}")
+        assert enhanced_res.status_code == 200
+
+        original_res = client.get(f"/api/preview/{mosaic_id}/original")
+        assert original_res.status_code == 200
+        assert original_res.headers["content-type"] == "image/png"
+
+        assert enhanced_res.content != original_res.content
