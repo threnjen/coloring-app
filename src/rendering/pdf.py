@@ -8,11 +8,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
-from src.config import PAPER_HEIGHT_MM
-from src.config import PAPER_WIDTH_MM
-from src.models.mosaic import ColorPalette
-from src.models.mosaic import GridCell
-from src.models.mosaic import MosaicSheet
+from src.config import PAPER_HEIGHT_MM, PAPER_WIDTH_MM
+from src.models.mosaic import ColorPalette, GridCell, MosaicSheet
 from src.rendering.geometry import hex_vertices
 
 logger = logging.getLogger(__name__)
@@ -56,11 +53,16 @@ class PdfRenderer:
 
         mode = sheet.mode
 
+        if mode not in {"square", "circle", "hexagon"}:
+            raise ValueError(f"Unsupported mode: {mode!r}")
+
         if mode == "hexagon":
             col_spacing_pt = cell_pt
             row_spacing_pt = cell_pt * math.sqrt(3) / 2
             grid_width_mm = sheet.columns * cell_mm + cell_mm / 2
-            grid_height_mm = sheet.rows * cell_mm * math.sqrt(3) / 2 + cell_mm * math.sqrt(3) / 2
+            grid_height_mm = (
+                sheet.rows * cell_mm * math.sqrt(3) / 2 + cell_mm * math.sqrt(3) / 2
+            )
         else:
             grid_width_mm = sheet.columns * cell_mm
             grid_height_mm = sheet.rows * cell_mm
@@ -149,7 +151,9 @@ class PdfRenderer:
         c.setStrokeColorRGB(r, g, b)
         c.circle(cx, cy, radius, fill=1, stroke=0)
 
-        c.setFillColorRGB(0, 0, 0)
+        brightness = 0.299 * r + 0.587 * g + 0.114 * b
+        label_val = 0.0 if brightness >= 0.5 else 1.0
+        c.setFillColorRGB(label_val, label_val, label_val)
         c.setFont(font_name, font_size)
         tw = c.stringWidth(cell.label, font_name, font_size)
         tx = cx - tw / 2
@@ -187,7 +191,9 @@ class PdfRenderer:
         path.close()
         c.drawPath(path, fill=1, stroke=0)
 
-        c.setFillColorRGB(0, 0, 0)
+        brightness = 0.299 * r + 0.587 * g + 0.114 * b
+        label_val = 0.0 if brightness >= 0.5 else 1.0
+        c.setFillColorRGB(label_val, label_val, label_val)
         c.setFont(font_name, font_size)
         tw = c.stringWidth(cell.label, font_name, font_size)
         tx = cx - tw / 2

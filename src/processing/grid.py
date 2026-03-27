@@ -5,10 +5,8 @@ import logging
 import numpy as np
 from scipy import stats
 
-from src.config import GRID_COLUMNS
-from src.config import GRID_ROWS
-from src.models.mosaic import ColorPalette
-from src.models.mosaic import GridCell
+from src.config import GRID_COLUMNS, GRID_ROWS
+from src.models.mosaic import ColorPalette, GridCell
 
 logger = logging.getLogger(__name__)
 

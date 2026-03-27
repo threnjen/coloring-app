@@ -3,7 +3,9 @@
 import math
 
 
-def hex_vertices(cx: float, cy: float, circumradius: float) -> list[tuple[float, float]]:
+def hex_vertices(
+    cx: float, cy: float, circumradius: float
+) -> list[tuple[float, float]]:
     """Compute the 6 vertices of a pointy-top regular hexagon.
 
     Args:

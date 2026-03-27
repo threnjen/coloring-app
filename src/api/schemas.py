@@ -2,11 +2,9 @@
 
 from enum import Enum
 
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
-from src.config import MAX_COLORS
-from src.config import MIN_COLORS
+from src.config import MAX_COLORS, MIN_COLORS
 
 
 class MosaicMode(str, Enum):
@@ -60,7 +58,7 @@ class ProcessResponse(BaseModel):
     columns: int
     rows: int
     component_size_mm: float
-    mode: str
+    mode: MosaicMode
     palette: list[dict]
 
 

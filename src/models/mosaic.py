@@ -1,7 +1,6 @@
 """Core data models for mosaic coloring sheets."""
 
-from dataclasses import dataclass
-from dataclasses import field
+from dataclasses import dataclass, field
 
 import numpy as np
 

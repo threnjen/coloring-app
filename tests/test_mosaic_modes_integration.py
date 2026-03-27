@@ -18,7 +18,9 @@ def client():
 
 def _make_jpeg_bytes(width: int = 400, height: int = 300) -> bytes:
     """Create a JPEG image in memory."""
-    arr = np.random.default_rng(42).integers(0, 255, size=(height, width, 3), dtype=np.uint8)
+    arr = np.random.default_rng(42).integers(
+        0, 255, size=(height, width, 3), dtype=np.uint8
+    )
     img = Image.fromarray(arr, "RGB")
     buf = io.BytesIO()
     img.save(buf, format="JPEG")
@@ -28,7 +30,9 @@ def _make_jpeg_bytes(width: int = 400, height: int = 300) -> bytes:
 def _upload_and_crop(client: TestClient) -> str:
     """Upload and crop an image, returning the cropped image ID."""
     data = _make_jpeg_bytes(800, 600)
-    upload_res = client.post("/api/upload", files={"file": ("test.jpg", data, "image/jpeg")})
+    upload_res = client.post(
+        "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
+    )
     assert upload_res.status_code == 200
     image_id = upload_res.json()["image_id"]
 

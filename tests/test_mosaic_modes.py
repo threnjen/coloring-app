@@ -9,17 +9,23 @@ from src.models.mosaic import ColorPalette, GridCell, MosaicSheet
 from src.rendering.preview import PreviewRenderer
 
 
-def _make_grid(n_colors: int, columns: int, rows: int) -> tuple[list[list[GridCell]], ColorPalette]:
+def _make_grid(
+    n_colors: int, columns: int, rows: int
+) -> tuple[list[list[GridCell]], ColorPalette]:
     """Build a simple grid and palette for testing."""
     palette = ColorPalette(
-        colors_rgb=np.random.default_rng(42).integers(0, 255, size=(n_colors, 3), dtype=np.uint8)
+        colors_rgb=np.random.default_rng(42).integers(
+            0, 255, size=(n_colors, 3), dtype=np.uint8
+        )
     )
     grid = []
     for r in range(rows):
         row_cells = []
         for c in range(columns):
             idx = (r * columns + c) % n_colors
-            row_cells.append(GridCell(row=r, col=c, color_index=idx, label=palette.label(idx)))
+            row_cells.append(
+                GridCell(row=r, col=c, color_index=idx, label=palette.label(idx))
+            )
         grid.append(row_cells)
     return grid, palette
 
@@ -68,7 +74,11 @@ class TestCirclePreview:
         pixels = np.array(img)
 
         # Corner pixel of first cell (0,0) should be black (outside the circle)
-        assert tuple(pixels[0, 0]) == (0, 0, 0), "Corner of cell should be black in circle mode"
+        assert tuple(pixels[0, 0]) == (
+            0,
+            0,
+            0,
+        ), "Corner of cell should be black in circle mode"
 
     def test_circle_preview_cell_is_round(self) -> None:
         """Circle preview: center of cell should have palette color, not black."""
@@ -81,7 +91,9 @@ class TestCirclePreview:
         cx, cy = 10, 10  # center of cell_size=20
         center_color = tuple(pixels[cy, cx])
         expected = tuple(int(v) for v in palette.colors_rgb[grid[0][0].color_index])
-        assert center_color == expected, f"Center should be {expected}, got {center_color}"
+        assert (
+            center_color == expected
+        ), f"Center should be {expected}, got {center_color}"
 
 
 class TestHexagonPreview:
@@ -95,7 +107,11 @@ class TestHexagonPreview:
         pixels = np.array(img)
 
         # Corner pixel (0,0) should be black (outside any hexagon)
-        assert tuple(pixels[0, 0]) == (0, 0, 0), "Corner should be black in hexagon mode"
+        assert tuple(pixels[0, 0]) == (
+            0,
+            0,
+            0,
+        ), "Corner should be black in hexagon mode"
 
     def test_hexagon_odd_row_offset(self) -> None:
         """Hexagon preview: odd row cells should be offset by half a column."""
@@ -116,7 +132,11 @@ class TestHexagonPreview:
         odd_center_x = 10 + 10  # col_spacing/2 offset
         # If offset is implemented, the pixel at the odd-row center should be colored
         color = tuple(pixels[odd_row_y, odd_center_x])
-        assert color != (0, 0, 0), "Odd row hex center should be colored (offset applied)"
+        assert color != (
+            0,
+            0,
+            0,
+        ), "Odd row hex center should be colored (offset applied)"
 
     def test_hexagon_pointy_top_orientation(self) -> None:
         """Hexagon preview: hexagons should be pointy-top (taller than wide check)."""
@@ -129,8 +149,12 @@ class TestHexagonPreview:
         # For pointy-top, the top vertex should be directly above center
         # Top vertex: (cx, cy - R)
         top_vertex = vertices[0]
-        assert top_vertex[0] == pytest.approx(100, abs=0.1), "Top vertex x should be at center"
-        assert top_vertex[1] == pytest.approx(80, abs=0.1), "Top vertex y should be cy - R"
+        assert top_vertex[0] == pytest.approx(
+            100, abs=0.1
+        ), "Top vertex x should be at center"
+        assert top_vertex[1] == pytest.approx(
+            80, abs=0.1
+        ), "Top vertex y should be cy - R"
 
 
 class TestCirclePdf:
@@ -163,7 +187,9 @@ class TestCirclePdf:
         # All labels should appear in the PDF
         for i in range(4):
             label = sheet.palette.label(i)
-            assert label.encode("latin-1") in pdf_bytes, f"Label '{label}' missing from PDF"
+            assert (
+                label.encode("latin-1") in pdf_bytes
+            ), f"Label '{label}' missing from PDF"
 
 
 class TestHexagonPdf:

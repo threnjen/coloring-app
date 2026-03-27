@@ -3,12 +3,9 @@
 import logging
 import math
 
-from PIL import Image
-from PIL import ImageDraw
-from PIL import ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
-from src.models.mosaic import ColorPalette
-from src.models.mosaic import GridCell
+from src.models.mosaic import ColorPalette, GridCell
 from src.rendering.geometry import hex_vertices
 
 logger = logging.getLogger(__name__)
@@ -67,12 +64,18 @@ class PreviewRenderer:
 
         font_size = max(7, self._cell_size - 4)
         try:
-            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size)
+            font = ImageFont.truetype(
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size
+            )
         except (OSError, IOError):
             try:
-                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", font_size)
+                font = ImageFont.truetype(
+                    "/System/Library/Fonts/Helvetica.ttc", font_size
+                )
             except (OSError, IOError):
-                logger.warning("No TrueType font found; falling back to default bitmap font")
+                logger.warning(
+                    "No TrueType font found; falling back to default bitmap font"
+                )
                 font = ImageFont.load_default()
 
         for row_cells in grid:
@@ -83,8 +86,16 @@ class PreviewRenderer:
                     self._draw_circle_cell(draw, cell, palette, font)
                 elif mode == "hexagon":
                     self._draw_hexagon_cell(draw, cell, palette, font)
+                else:
+                    raise ValueError(f"Unsupported mode: {mode!r}")
 
         return img
+
+    @staticmethod
+    def _label_color_for_rgb(rgb: tuple[int, int, int]) -> str:
+        """Return 'white' or 'black' for optimal contrast against the given RGB color."""
+        brightness = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
+        return "white" if brightness < 128 else "black"
 
     def _draw_square_cell(
         self,
@@ -102,8 +113,7 @@ class PreviewRenderer:
         rgb = tuple(int(v) for v in palette.colors_rgb[cell.color_index])
         draw.rectangle([x0, y0, x1, y1], fill=rgb)
 
-        brightness = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
-        label_color = "white" if brightness < 128 else "black"
+        label_color = self._label_color_for_rgb(rgb)
 
         bbox = draw.textbbox((0, 0), cell.label, font=font)
         tw = bbox[2] - bbox[0]
@@ -129,8 +139,7 @@ class PreviewRenderer:
         rgb = tuple(int(v) for v in palette.colors_rgb[cell.color_index])
         draw.ellipse([x0, y0, x1, y1], fill=rgb)
 
-        brightness = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
-        label_color = "white" if brightness < 128 else "black"
+        label_color = self._label_color_for_rgb(rgb)
 
         cx = cell.col * self._cell_size + self._cell_size / 2
         cy = cell.row * self._cell_size + self._cell_size / 2
@@ -167,8 +176,7 @@ class PreviewRenderer:
         rgb = tuple(int(v) for v in palette.colors_rgb[cell.color_index])
         draw.polygon(vertices, fill=rgb)
 
-        brightness = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
-        label_color = "white" if brightness < 128 else "black"
+        label_color = self._label_color_for_rgb(rgb)
 
         bbox = draw.textbbox((0, 0), cell.label, font=font)
         tw = bbox[2] - bbox[0]

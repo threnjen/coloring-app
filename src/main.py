@@ -10,9 +10,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from src.api.routes import router
-from src.config import TEMP_CLEANUP_INTERVAL_SECONDS
-from src.config import TEMP_DIR
-from src.config import TEMP_TTL_SECONDS
+from src.config import TEMP_CLEANUP_INTERVAL_SECONDS, TEMP_DIR, TEMP_TTL_SECONDS
 
 logging.basicConfig(
     level=logging.INFO,

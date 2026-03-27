@@ -2,8 +2,7 @@
 
 import numpy as np
 
-from src.config import GRID_DIMENSIONS
-from src.config import LABEL_CHARS
+from src.config import GRID_DIMENSIONS, LABEL_CHARS
 from src.models.mosaic import ColorPalette
 from src.processing.grid import GridGenerator
 

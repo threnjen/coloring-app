@@ -2,10 +2,8 @@
 
 import numpy as np
 
-from src.models.mosaic import ColorPalette
-from src.models.mosaic import GridCell
-from src.rendering.preview import PREVIEW_CELL_PX
-from src.rendering.preview import PreviewRenderer
+from src.models.mosaic import ColorPalette, GridCell
+from src.rendering.preview import PREVIEW_CELL_PX, PreviewRenderer
 
 
 def _make_grid(
