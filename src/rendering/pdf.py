@@ -10,7 +10,6 @@ from reportlab.pdfgen import canvas
 
 from src.config import PAPER_HEIGHT_MM, PAPER_WIDTH_MM
 from src.models.mosaic import ColorPalette, GridCell, MosaicSheet
-from src.rendering.color_utils import perceived_brightness
 from src.rendering.geometry import hex_vertices
 
 logger = logging.getLogger(__name__)
@@ -61,9 +60,7 @@ class PdfRenderer:
             col_spacing_pt = cell_pt
             row_spacing_pt = cell_pt * math.sqrt(3) / 2
             grid_width_mm = sheet.columns * cell_mm + cell_mm / 2
-            grid_height_mm = (
-                sheet.rows * cell_mm * math.sqrt(3) / 2 + cell_mm * math.sqrt(3) / 2
-            )
+            grid_height_mm = sheet.rows * cell_mm * math.sqrt(3) / 2 + cell_mm * math.sqrt(3) / 2
         else:
             grid_width_mm = sheet.columns * cell_mm
             grid_height_mm = sheet.rows * cell_mm
@@ -77,16 +74,6 @@ class PdfRenderer:
         font_name = "Helvetica"
         font_size = max(4, cell_mm * 0.6) * mm / mm * 2
         c.setFont(font_name, font_size)
-
-        if mode != "square":
-            if mode == "hexagon":
-                bg_w = grid_width_mm * mm
-                bg_h = grid_height_mm * mm
-            else:
-                bg_w = sheet.columns * cell_pt
-                bg_h = sheet.rows * cell_pt
-            c.setFillColorRGB(0, 0, 0)
-            c.rect(x_offset, y_top - bg_h, bg_w, bg_h, fill=1, stroke=0)
 
         for row_cells in sheet.grid:
             for cell in row_cells:
@@ -141,20 +128,17 @@ class PdfRenderer:
         font_size: float,
         palette: "ColorPalette",
     ) -> None:
-        """Draw a single circle cell with color fill and label."""
+        """Draw a single circle cell with outline and label."""
         gap_pt = 0.5 * mm
         radius = (cell_pt - gap_pt) / 2
         cx = x + cell_pt / 2
         cy = y + cell_pt / 2
 
-        r, g, b = (int(v) / 255.0 for v in palette.colors_rgb[cell.color_index])
-        c.setFillColorRGB(r, g, b)
-        c.setStrokeColorRGB(r, g, b)
-        c.circle(cx, cy, radius, fill=1, stroke=0)
+        c.setStrokeColorRGB(0.7, 0.7, 0.7)
+        c.setLineWidth(0.25)
+        c.circle(cx, cy, radius, fill=0, stroke=1)
 
-        brightness = perceived_brightness(r, g, b)
-        label_val = 0.0 if brightness >= 0.5 else 1.0
-        c.setFillColorRGB(label_val, label_val, label_val)
+        c.setFillColorRGB(0, 0, 0)
         c.setFont(font_name, font_size)
         tw = c.stringWidth(cell.label, font_name, font_size)
         tx = cx - tw / 2
@@ -172,7 +156,7 @@ class PdfRenderer:
         font_size: float,
         palette: "ColorPalette",
     ) -> None:
-        """Draw a single hexagon cell with color fill and label."""
+        """Draw a single hexagon cell with outline and label."""
         gap_pt = 0.5 * mm
         flat_to_flat = cell_pt - gap_pt * 2
         circumradius = flat_to_flat / math.sqrt(3)
@@ -182,19 +166,17 @@ class PdfRenderer:
 
         vertices = hex_vertices(cx, cy, circumradius)
 
-        r, g, b = (int(v) / 255.0 for v in palette.colors_rgb[cell.color_index])
-        c.setFillColorRGB(r, g, b)
+        c.setStrokeColorRGB(0.7, 0.7, 0.7)
+        c.setLineWidth(0.25)
 
         path = c.beginPath()
         path.moveTo(*vertices[0])
         for vx, vy in vertices[1:]:
             path.lineTo(vx, vy)
         path.close()
-        c.drawPath(path, fill=1, stroke=0)
+        c.drawPath(path, fill=0, stroke=1)
 
-        brightness = perceived_brightness(r, g, b)
-        label_val = 0.0 if brightness >= 0.5 else 1.0
-        c.setFillColorRGB(label_val, label_val, label_val)
+        c.setFillColorRGB(0, 0, 0)
         c.setFont(font_name, font_size)
         tw = c.stringWidth(cell.label, font_name, font_size)
         tx = cx - tw / 2
