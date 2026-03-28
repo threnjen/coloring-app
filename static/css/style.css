@@ -299,3 +299,98 @@ label.btn {
     display: flex;
     gap: 12px;
 }
+
+/* --- Editor (Phase 3) --- */
+.editor-preview-area {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    max-height: 500px;
+    position: relative;
+}
+
+.editor-preview-area img {
+    display: block;
+    max-width: 100%;
+    max-height: 500px;
+    object-fit: contain;
+}
+
+.checkerboard {
+    background-image:
+        linear-gradient(45deg, #ccc 25%, transparent 25%),
+        linear-gradient(-45deg, #ccc 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #ccc 75%),
+        linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.checkerboard:active {
+    cursor: grabbing;
+}
+
+.checkerboard img {
+    pointer-events: none;
+}
+
+/* --- Background thumbnails --- */
+.bg-thumbnails {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.bg-thumb {
+    padding: 6px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.bg-thumb:hover {
+    border-color: #4a90d9;
+}
+
+.bg-thumb.selected {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.3);
+    font-weight: 600;
+}
+
+/* --- Editor position/scale controls --- */
+.editor-position-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.editor-position-controls input[type="range"] {
+    flex: 1;
+    max-width: 250px;
+}
+
+.editor-custom-upload {
+    margin-bottom: 12px;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.editor-nav {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}

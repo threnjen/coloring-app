@@ -36,6 +36,65 @@
             <button id="crop-btn" class="btn btn-primary">Crop & Continue</button>
         </section>
 
+        <!-- Step 2b: Edit (Phase 3) -->
+        <section id="step-edit" class="step" hidden>
+            <h2>Edit Your Image</h2>
+            <p class="hint">Optional — remove the background, pick a new one, and position your subject. Or skip to go straight to mosaic generation.</p>
+
+            <div id="editor-preview-area" class="editor-preview-area">
+                <div id="editor-checkerboard" class="checkerboard" hidden>
+                    <img id="editor-cutout-img" src="" alt="Cutout preview">
+                </div>
+                <div id="editor-composite-preview" hidden>
+                    <img id="editor-composite-img" src="" alt="Composite preview">
+                </div>
+                <div id="editor-crop-preview">
+                    <img id="editor-crop-img" src="" alt="Cropped image">
+                </div>
+            </div>
+
+            <div id="editor-cutout-controls">
+                <button id="cutout-btn" class="btn btn-primary">Cut Out Subject</button>
+                <div id="cutout-loading" class="loading" hidden>
+                    <div class="spinner"></div>
+                    <span id="cutout-loading-text">Removing background…</span>
+                </div>
+            </div>
+
+            <div id="editor-bg-controls" hidden>
+                <h3>Choose a Background</h3>
+                <div id="bg-thumbnails" class="bg-thumbnails"></div>
+
+                <div class="editor-custom-upload">
+                    <label for="bg-file-input" class="btn btn-secondary">Upload Custom Background</label>
+                    <input type="file" id="bg-file-input" accept="image/jpeg,image/png" hidden>
+                </div>
+
+                <div class="editor-position-controls">
+                    <label for="scale-slider">Scale:</label>
+                    <input type="range" id="scale-slider" min="0.25" max="2.0" step="0.05" value="1.0">
+                    <span id="scale-value">1.00</span>
+                </div>
+                <p class="hint">Drag the subject in the preview to reposition.</p>
+
+                <div class="editor-actions">
+                    <button id="apply-composite-btn" class="btn btn-primary">Apply Composite</button>
+                </div>
+            </div>
+
+            <div id="editor-undo-controls" class="editor-actions" hidden>
+                <button id="undo-composite-btn" class="btn btn-secondary">Undo Composite</button>
+            </div>
+
+            <div id="editor-error" class="error" hidden></div>
+
+            <div class="editor-nav">
+                <button id="undo-cutout-btn" class="btn btn-secondary" hidden>Undo Cutout</button>
+                <button id="skip-edit-btn" class="btn btn-secondary">Skip Editing</button>
+                <button id="continue-edit-btn" class="btn btn-primary" hidden>Continue to Mosaic</button>
+            </div>
+        </section>
+
         <!-- Step 3: Process -->
         <section id="step-process" class="step" hidden>
             <h2>3. Choose Colors</h2>
@@ -100,6 +159,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" integrity="sha512-JyCZjCOZoyeQZSd5+YEAcFgz2fowJ1F1hyJOXgtKu4llIa0KneLcidn5bwfutiehUTiOuK87A986BZJMko0eWQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="js/crop.js"></script>
+    <script src="js/editor.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

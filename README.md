@@ -84,6 +84,14 @@ With the virtual environment active:
 uvicorn src.main:app --reload
 ```
 
+> **Note (Phase 3 — Image Editing):** The background-removal feature uses
+> [rembg](https://github.com/danielgatis/rembg) with the U2-Net model (~170 MB).
+> The model is downloaded automatically on first use. To pre-download it:
+>
+> ```bash
+> python -c "from rembg import new_session; new_session('u2net')"
+> ```
+
 Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in a browser.
 
 FastAPI auto-generated API docs are at:

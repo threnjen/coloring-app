@@ -10,12 +10,14 @@ const state = {
 };
 
 const cropManager = new CropManager();
+const editorManager = new EditorManager();
 
 // --- DOM references ---
 const fileInput = document.getElementById('file-input');
 const uploadError = document.getElementById('upload-error');
 const stepUpload = document.getElementById('step-upload');
 const stepCrop = document.getElementById('step-crop');
+const stepEdit = document.getElementById('step-edit');
 const stepProcess = document.getElementById('step-process');
 const stepPreview = document.getElementById('step-preview');
 const cropBtn = document.getElementById('crop-btn');
@@ -34,7 +36,7 @@ const toggleOriginal = document.getElementById('toggle-original');
 
 // --- Step navigation ---
 function showStep(stepEl) {
-    [stepUpload, stepCrop, stepProcess, stepPreview].forEach(s => s.hidden = true);
+    [stepUpload, stepCrop, stepEdit, stepProcess, stepPreview].forEach(s => s.hidden = true);
     stepEl.hidden = false;
 }
 
@@ -99,7 +101,8 @@ cropBtn.addEventListener('click', async () => {
         const data = await res.json();
         state.croppedImageId = data.cropped_image_id;
         cropManager.destroy();
-        showStep(stepProcess);
+        editorManager.init(data.cropped_image_id);
+        showStep(stepEdit);
     } catch (err) {
         showError('Crop failed: ' + err.message);
     } finally {
@@ -288,6 +291,13 @@ restartBtn.addEventListener('click', () => {
     state.originalFile = null;
     fileInput.value = '';
     toggleOriginal.checked = false;
+    editorManager.reset();
     clearError();
     showStep(stepUpload);
 });
+
+// --- Editor continue callback ---
+window._editorContinueCallback = function(imageId) {
+    state.croppedImageId = imageId;
+    showStep(stepProcess);
+};
