@@ -590,19 +590,42 @@ async def composite_image(request: Request) -> CompositeResponse:
         form = await request.form()
         cutout_image_id = form.get("cutout_image_id")
         background_id = form.get("background_id")
-        x = int(form.get("x", 0))
-        y = int(form.get("y", 0))
-        scale = float(form.get("scale", 1.0))
+        try:
+            x = int(form.get("x", 0))
+            y = int(form.get("y", 0))
+            scale = float(form.get("scale", 1.0))
+        except (ValueError, TypeError) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid numeric value for x, y, or scale: {exc}",
+            ) from exc
         bg_file = form.get("background_file")
         if bg_file is not None:
+            if not callable(getattr(bg_file, "read", None)):
+                raise HTTPException(
+                    status_code=400,
+                    detail="background_file must be a file upload",
+                )
             background_file_data = await bg_file.read()
     else:
-        body = await request.json()
+        try:
+            body = await request.json()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid JSON body: {exc}",
+            ) from exc
         cutout_image_id = body.get("cutout_image_id")
         background_id = body.get("background_id")
-        x = int(body.get("x", 0))
-        y = int(body.get("y", 0))
-        scale = float(body.get("scale", 1.0))
+        try:
+            x = int(body.get("x", 0))
+            y = int(body.get("y", 0))
+            scale = float(body.get("scale", 1.0))
+        except (ValueError, TypeError) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid numeric value for x, y, or scale: {exc}",
+            ) from exc
 
     if not cutout_image_id:
         raise HTTPException(
@@ -619,7 +642,8 @@ async def composite_image(request: Request) -> CompositeResponse:
             status_code=404,
             detail=f"Cutout '{cutout_image_id}' not found",
         )
-    subject = Image.open(str(cutout_path)).convert("RGBA")
+    with Image.open(str(cutout_path)) as _cutout_img:
+        subject = _cutout_img.convert("RGBA")
     crop_w, crop_h = subject.size
 
     # Load or generate background

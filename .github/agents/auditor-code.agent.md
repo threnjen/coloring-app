@@ -1,7 +1,7 @@
 ---
 name: Auditor - Code
 description: "Use when: auditing code quality, checking type hints, evaluating docstrings, finding inline comments to remove, assessing readability and brevity, reviewing security posture, checking for unnecessary dependencies, enforcing DRY principles, or running a comprehensive code health check across the codebase."
-tools: [read, search, edit, fetch, run_in_terminal]
+tools: [read, search, edit, web, run_in_terminal]
 model: "Claude Opus 4 (Copilot)"
 ---
 

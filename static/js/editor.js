@@ -22,6 +22,7 @@ class EditorManager {
         this._dragStartY = 0;
         this._dragOffsetX = 0;
         this._dragOffsetY = 0;
+        this._dragBound = false;
     }
 
     /** Initialize the editor for a cropped image. */
@@ -53,6 +54,7 @@ class EditorManager {
         this.scale = 1.0;
         this._backgrounds = [];
         this._dragging = false;
+        this._dragBound = false;
 
         document.getElementById('editor-bg-controls').hidden = true;
         document.getElementById('editor-undo-controls').hidden = true;
@@ -103,6 +105,7 @@ class EditorManager {
                 cropPreview.hidden = false;
                 checkerboard.hidden = true;
                 compositePreview.hidden = true;
+                document.getElementById('cutout-loading').hidden = true;
                 break;
 
             case 'cutting':
@@ -169,6 +172,7 @@ class EditorManager {
         scaleSlider.oninput = () => {
             this.scale = parseFloat(scaleSlider.value);
             document.getElementById('scale-value').textContent = this.scale.toFixed(2);
+            this._updatePreviewTransform();
         };
 
         // Apply composite
@@ -190,7 +194,14 @@ class EditorManager {
         this._setupDrag();
     }
 
+    _updatePreviewTransform() {
+        const cutoutImg = document.getElementById('editor-cutout-img');
+        cutoutImg.style.transform = `translate(${this.subjectX}px, ${this.subjectY}px) scale(${this.scale})`;
+    }
+
     _setupDrag() {
+        if (this._dragBound) return;
+        this._dragBound = true;
         const checkerboard = document.getElementById('editor-checkerboard');
         const cutoutImg = document.getElementById('editor-cutout-img');
 
@@ -211,7 +222,7 @@ class EditorManager {
             const dy = e.clientY - this._dragStartY;
             this.subjectX = this._dragOffsetX + dx;
             this.subjectY = this._dragOffsetY + dy;
-            cutoutImg.style.transform = `translate(${this.subjectX}px, ${this.subjectY}px)`;
+            this._updatePreviewTransform();
             e.preventDefault();
         });
 

@@ -111,7 +111,7 @@ Each agent produces structured output — plan documents, implementation summari
 **Debugger - Frontend** (full tool access — reads and writes code)
 > Give it an error message or description. It classifies the error (build-time, runtime, network), investigates via stack traces and browser tools, and applies minimal targeted fixes.
 
-**Web Researcher** (read-only — uses fetch)
+**Web Researcher** (read-only — uses web)
 > Give it a problem or topic. It generates multiple search query variations, searches across GitHub issues, Stack Overflow, Reddit, forums, and docs, and compiles a structured findings report with sources.
 
 **QA Writer** (document-only — does not modify code)

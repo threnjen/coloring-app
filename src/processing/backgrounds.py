@@ -114,8 +114,9 @@ class BackgroundProvider:
                 for ext in ("png", "jpg", "jpeg"):
                     candidate = PRESET_BACKGROUNDS_DIR / f"{preset.name}.{ext}"
                     if candidate.exists():
-                        img = Image.open(str(candidate)).convert("RGB")
-                        return self.resize_to_fill(img, width, height)
+                        with Image.open(str(candidate)) as img:
+                            img_rgb = img.convert("RGB")
+                        return self.resize_to_fill(img_rgb, width, height)
 
         raise ValueError(f"Background '{background_id}' not found")
 

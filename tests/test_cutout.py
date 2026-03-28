@@ -1,10 +1,33 @@
 """Unit tests for CutoutProcessor (AC3.1, AC3.2)."""
 
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 from PIL import Image
 
 from src.processing.cutout import CutoutProcessor
+
+
+def _mock_rembg_remove(image, **kwargs):
+    """Deterministic mock for rembg.remove that produces a known RGBA output."""
+    arr = np.array(image)
+    h, w = arr.shape[:2]
+    alpha = np.zeros((h, w), dtype=np.uint8)
+    # Create a smooth-edged mask: center 60% opaque, edges feathered
+    margin_h, margin_w = h // 5, w // 5
+    alpha[margin_h : h - margin_h, margin_w : w - margin_w] = 255
+    # Feather edges with a simple gradient band
+    for i in range(margin_h):
+        val = int(255 * i / margin_h)
+        alpha[i, margin_w : w - margin_w] = val
+        alpha[h - 1 - i, margin_w : w - margin_w] = val
+    for j in range(margin_w):
+        val = int(255 * j / margin_w)
+        alpha[margin_h : h - margin_h, j] = val
+        alpha[margin_h : h - margin_h, w - 1 - j] = val
+    rgba = np.dstack([arr, alpha])
+    return Image.fromarray(rgba, "RGBA")
 
 
 @pytest.fixture
@@ -18,7 +41,8 @@ def subject_on_background() -> Image.Image:
 class TestCutoutProcessor:
     """Tests for CutoutProcessor."""
 
-    def test_cutout_produces_rgba(self, subject_on_background: Image.Image) -> None:
+    @patch("src.processing.cutout.remove", side_effect=_mock_rembg_remove)
+    def test_cutout_produces_rgba(self, _mock_remove, subject_on_background: Image.Image) -> None:
         """AC3.1: Output has 4 channels (RGBA) and alpha is non-trivial."""
         processor = CutoutProcessor()
         rgba, _mask = processor.remove_background(subject_on_background)
@@ -29,7 +53,8 @@ class TestCutoutProcessor:
         assert alpha.min() < 128, "Expected some transparent pixels"
         assert alpha.max() > 128, "Expected some opaque pixels"
 
-    def test_cutout_returns_mask(self, subject_on_background: Image.Image) -> None:
+    @patch("src.processing.cutout.remove", side_effect=_mock_rembg_remove)
+    def test_cutout_returns_mask(self, _mock_remove, subject_on_background: Image.Image) -> None:
         """AC3.1: Separate grayscale mask returned, same dimensions as input."""
         processor = CutoutProcessor()
         rgba, mask = processor.remove_background(subject_on_background)
@@ -38,7 +63,8 @@ class TestCutoutProcessor:
         assert mask.size == subject_on_background.size
         assert mask.size == rgba.size
 
-    def test_cutout_mask_is_smooth(self, subject_on_background: Image.Image) -> None:
+    @patch("src.processing.cutout.remove", side_effect=_mock_rembg_remove)
+    def test_cutout_mask_is_smooth(self, _mock_remove, subject_on_background: Image.Image) -> None:
         """AC3.2: Mask edges are not jagged — edge gradient variance is low."""
         processor = CutoutProcessor()
         _rgba, mask = processor.remove_background(subject_on_background)
@@ -59,7 +85,8 @@ class TestCutoutProcessor:
         if len(edge_grads_y) > 0:
             assert edge_grads_y.mean() < 200, "Mask edges appear jagged (y-axis)"
 
-    def test_cutout_mask_feathered(self, subject_on_background: Image.Image) -> None:
+    @patch("src.processing.cutout.remove", side_effect=_mock_rembg_remove)
+    def test_cutout_mask_feathered(self, _mock_remove, subject_on_background: Image.Image) -> None:
         """AC3.2: Alpha values between 0-255 exist at edges (feathering)."""
         processor = CutoutProcessor()
         rgba, _mask = processor.remove_background(subject_on_background)

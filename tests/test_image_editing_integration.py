@@ -141,6 +141,16 @@ class TestCutoutImageEndpoint:
         assert res.status_code == 200
         assert res.headers["content-type"] == "image/png"
 
+    def test_cutout_image_invalid_id(self, client: TestClient) -> None:
+        """GET bad cutout ID → 400."""
+        res = client.get("/api/cutout/not-valid!!!/image")
+        assert res.status_code == 400
+
+    def test_cutout_image_nonexistent(self, client: TestClient) -> None:
+        """GET missing cutout ID → 404."""
+        res = client.get(f"/api/cutout/{'a' * 32}/image")
+        assert res.status_code == 404
+
 
 class TestPipelineIntegration:
     """End-to-end pipeline integration tests."""

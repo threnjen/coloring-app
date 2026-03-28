@@ -1,7 +1,7 @@
 ---
 name: Project Planner
 description: "Use when: creating a project roadmap, breaking a project into phases, high-level planning, defining project scope and milestones, establishing a phased implementation strategy, or planning an entire project end-to-end. Iterates with the user to produce self-contained phase documents that the Feature Planner can decompose into individual features."
-tools: [read, search, edit, fetch, run in terminal]
+tools: [read, search, edit, web, run in terminal]
 model: "Claude Opus 4 (Copilot)"
 ---
 
@@ -154,7 +154,7 @@ Ask the user targeted questions to build a complete picture. Focus on:
 
 Keep questions to the **minimum needed** to avoid wrong assumptions. Prefer questions that prevent rework later. Aim for no more than 10 questions total, and batch them rather than asking one at a time.
 
-If the user provides external URLs, **fetch and review them** during this phase to inform the roadmap.
+If the user provides external URLs, **web and review them** during this phase to inform the roadmap.
 
 ### Phase 3: Present Roadmap (STOP HERE)
 
