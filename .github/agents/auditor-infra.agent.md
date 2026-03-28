@@ -1,7 +1,7 @@
 ---
 name: Auditor - Infra
 description: "Use when: auditing infrastructure files, reviewing Dockerfiles, evaluating CI/CD pipelines, checking IaC templates (CloudFormation, SAM, Terraform), reviewing build scripts, validating configuration files, assessing deployment safety, auditing documentation quality, or running a comprehensive infrastructure health check across the codebase."
-tools: [read, search, edit, web, run in terminal]
+tools: [read, search, edit, fetch, run in terminal]
 model: "Claude Opus 4 (Copilot)"
 ---
 

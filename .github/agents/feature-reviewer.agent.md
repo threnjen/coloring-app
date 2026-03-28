@@ -1,5 +1,5 @@
 ---
-name: Feature Reviewer
+name: 05 Feature - Reviewer
 description: "Use when: reviewing code, checking implementation against requirements, auditing for bugs, evaluating code quality, or validating that implementation matches the plan. Provides structured code review."
 model: "Claude Opus 4 (Copilot)"
 ---
@@ -129,7 +129,7 @@ When reviewing a pull request (rather than local files), use the GitHub PR tools
 
 - Use `github-pull-request_activePullRequest` to retrieve the active PR's description, changed files, and existing review comments
 - Use `get_changed_files` to get the git diff of all modified files
-- Use `github-pull-request_issue_web` to web any linked issues or referenced PRs for requirements context
+- Use `github-pull-request_issue_fetch` to fetch any linked issues or referenced PRs for requirements context
 
 ### 2. Incorporate Review Comments
 
@@ -196,7 +196,7 @@ After the review is complete — and after any approved fixes have been applied 
 | # | Issue | Severity | File:Line | AC | Status |
 |---|-------|----------|-----------|-----|--------|
 | 1 | Missing null check on user input | High | `src/handler.py:45` | AC3 | Fixed |
-| 2 | Inconsistent naming: `getData` vs `web_data` | Low | `src/utils.py:12` | — | Open |
+| 2 | Inconsistent naming: `getData` vs `fetch_data` | Low | `src/utils.py:12` | — | Open |
 
 **Status values**: Fixed (applied during this review) | Open (not addressed) | Wont-Fix (declined with rationale)
 
@@ -226,8 +226,8 @@ After writing the review record, provide the appropriate next step based on the 
 
 **If this was an initial code review (no PR yet):**
 
-> **"Review complete. The review record has been written to `dev/[task-name]/[task-name]-review.md`. Next, push your branch to GitHub and open a PR with Copilot review enabled. Once the PR review comments are in, open a new chat with `@Feature Reviewer` and attach the plan documents and implementation record to address the PR feedback."**
+> **"Review complete. The review record has been written to `dev/[task-name]/[task-name]-review.md`. Next, push your branch to GitHub and open a PR with Copilot review enabled. Once the PR review comments are in, open a new chat with `@05 Feature - Reviewer` and attach the plan documents and implementation record to address the PR feedback."**
 
 **If this was a PR review (addressing Copilot or reviewer comments):**
 
-> **"Review complete. The review record has been written to `dev/[task-name]/[task-name]-review.md`. To generate the release QA plan, open a new chat with `@QA Writer` and attach all documents from `dev/[task-name]/`."**
+> **"Review complete. The review record has been written to `dev/[task-name]/[task-name]-review.md`. To generate the release QA plan, open a new chat with `@06 QA - Writer` and attach all documents from `dev/[task-name]/`."**
