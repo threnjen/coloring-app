@@ -99,7 +99,8 @@ def _load_image(data: bytes) -> Image.Image:
         img = Image.open(BytesIO(data))
         img.load()  # Force decode to catch truncated/corrupt data
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Could not read image: {exc}") from exc
+        logger.exception("Failed to load image data")
+        raise HTTPException(status_code=400, detail="Could not read image") from exc
     if img.mode == "RGBA":
         background = Image.new("RGB", img.size, (255, 255, 255))
         background.paste(img, mask=img.split()[3])

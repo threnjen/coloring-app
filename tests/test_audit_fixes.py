@@ -1,8 +1,5 @@
 """Tests for code audit fixes. Covers AC1–AC14."""
 
-import io
-import os
-
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
@@ -190,12 +187,15 @@ class TestColorPaletteDtype:
             columns=1,
             rows=1,
         )
-        _mosaic_store["c" * 32] = sheet
-
-        # After palette edit, dtype should still be uint8
-        new_rgb = np.array([128, 64, 32], dtype=np.uint8)
-        sheet.palette.colors_rgb[0] = new_rgb
-        assert sheet.palette.colors_rgb.dtype == np.uint8
+        mosaic_id = "c" * 32
+        _mosaic_store[mosaic_id] = sheet
+        try:
+            # After palette edit, dtype should still be uint8
+            new_rgb = np.array([128, 64, 32], dtype=np.uint8)
+            sheet.palette.colors_rgb[0] = new_rgb
+            assert sheet.palette.colors_rgb.dtype == np.uint8
+        finally:
+            _mosaic_store.pop(mosaic_id, None)
 
 
 # --- AC7: Env var validation ---

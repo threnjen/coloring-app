@@ -83,7 +83,11 @@ app = FastAPI(title="Mosaic Coloring App", version="0.1.0", lifespan=lifespan)
 # AC8: CORS middleware with explicit origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:8000").split(","),
+    allow_origins=[
+        origin.strip()
+        for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:8000").split(",")
+        if origin.strip()
+    ],
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
