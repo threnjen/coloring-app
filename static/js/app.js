@@ -29,6 +29,7 @@ const previewImage = document.getElementById('preview-image');
 const paletteDisplay = document.getElementById('palette-display');
 const downloadBtn = document.getElementById('download-btn');
 const restartBtn = document.getElementById('restart-btn');
+const changeSettingsBtn = document.getElementById('change-settings-btn');
 const toggleOriginal = document.getElementById('toggle-original');
 
 // --- Step navigation ---
@@ -275,6 +276,9 @@ downloadBtn.addEventListener('click', () => {
         window.location.href = `/api/pdf/${state.mosaicId}`;
     }
 });
+
+// --- Change Settings (back to step 3) ---
+changeSettingsBtn.addEventListener('click', () => showStep(stepProcess));
 
 // --- Restart ---
 restartBtn.addEventListener('click', () => {
