@@ -91,3 +91,53 @@ class PaletteEditResponse(BaseModel):
 
     palette: list[PaletteEntry]
     warnings: list[str]
+
+
+# --- Phase 3: Image Editing ---
+
+
+class CutoutRequest(BaseModel):
+    """Request to remove the background from an image."""
+
+    image_id: str
+
+
+class CutoutResponse(BaseModel):
+    """Response after background removal."""
+
+    cutout_image_id: str
+    width: int
+    height: int
+
+
+class BackgroundInfoSchema(BaseModel):
+    """Metadata for a single available background."""
+
+    id: str
+    name: str
+    type: str
+    thumbnail_url: str | None = None
+
+
+class BackgroundListResponse(BaseModel):
+    """Response listing all available backgrounds."""
+
+    backgrounds: list[BackgroundInfoSchema]
+
+
+class CompositeRequest(BaseModel):
+    """Request to composite a cutout onto a background."""
+
+    cutout_image_id: str
+    background_id: str
+    x: int = 0
+    y: int = 0
+    scale: float = Field(default=1.0, ge=0.25, le=2.0)
+
+
+class CompositeResponse(BaseModel):
+    """Response after compositing."""
+
+    composite_image_id: str
+    width: int
+    height: int

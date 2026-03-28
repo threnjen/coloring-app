@@ -12,13 +12,18 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from PIL import Image
 
 from src.api.schemas import (
+    BackgroundInfoSchema,
+    BackgroundListResponse,
+    CompositeResponse,
     CropRequest,
     CropResponse,
+    CutoutRequest,
+    CutoutResponse,
     PaletteEditRequest,
     PaletteEditResponse,
     ProcessRequest,
@@ -33,6 +38,9 @@ from src.config import (
     TEMP_DIR,
 )
 from src.models.mosaic import ColorPalette, MosaicSheet
+from src.processing.backgrounds import BackgroundProvider
+from src.processing.compositing import Compositor
+from src.processing.cutout import CutoutProcessor
 from src.processing.enhancement import ImageEnhancer
 from src.processing.grid import GridGenerator
 from src.processing.quantization import ColorQuantizer
@@ -502,4 +510,176 @@ async def edit_palette(req: PaletteEditRequest) -> PaletteEditResponse:
     return PaletteEditResponse(
         palette=_build_palette_info(palette),
         warnings=warnings,
+    )
+
+
+# --- Phase 3: Image Editing ---
+
+
+@router.post("/cutout", response_model=CutoutResponse)
+async def cutout_image(req: CutoutRequest) -> CutoutResponse:
+    """Remove background from a stored image, producing an RGBA cutout."""
+    t0 = time.monotonic()
+    _validate_id(req.image_id, "image ID")
+
+    img = _load_stored_image(req.image_id)
+
+    processor = CutoutProcessor()
+    rgba, _mask = await asyncio.to_thread(processor.remove_background, img)
+
+    cutout_id = uuid.uuid4().hex
+    cutout_dir = _get_image_dir(cutout_id)
+    cutout_dir.mkdir(parents=True, exist_ok=True)
+    rgba.save(str(cutout_dir / "cutout.png"), "PNG")
+
+    # Store reference to the original image for undo support
+    (cutout_dir / "source_id.txt").write_text(req.image_id)
+
+    logger.info(
+        "Cutout complete: id=%s size=%dx%d elapsed=%.2fs",
+        cutout_id,
+        rgba.width,
+        rgba.height,
+        time.monotonic() - t0,
+    )
+    return CutoutResponse(cutout_image_id=cutout_id, width=rgba.width, height=rgba.height)
+
+
+@router.get("/cutout/{cutout_id}/image")
+async def get_cutout_image(cutout_id: str) -> Response:
+    """Return the cutout RGBA PNG for frontend display."""
+    _validate_id(cutout_id, "cutout ID")
+    path = _get_image_dir(cutout_id) / "cutout.png"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"Cutout '{cutout_id}' not found")
+    return Response(content=path.read_bytes(), media_type="image/png")
+
+
+@router.get("/backgrounds", response_model=BackgroundListResponse)
+async def list_backgrounds() -> BackgroundListResponse:
+    """Return list of available backgrounds (programmatic + file-based presets)."""
+    provider = BackgroundProvider()
+    backgrounds = provider.list_backgrounds()
+    return BackgroundListResponse(
+        backgrounds=[
+            BackgroundInfoSchema(
+                id=bg.id,
+                name=bg.name,
+                type=bg.type,
+                thumbnail_url=None,
+            )
+            for bg in backgrounds
+        ]
+    )
+
+
+@router.post("/composite", response_model=CompositeResponse)
+async def composite_image(request: Request) -> CompositeResponse:
+    """Composite a cutout onto a background.
+
+    Accepts either:
+    - JSON body with ``background_id`` for a preset background
+    - Multipart form with ``background_file`` for a custom upload
+    """
+    t0 = time.monotonic()
+
+    content_type = request.headers.get("content-type", "")
+    background_file_data: bytes | None = None
+
+    if "multipart/form-data" in content_type:
+        form = await request.form()
+        cutout_image_id = form.get("cutout_image_id")
+        background_id = form.get("background_id")
+        try:
+            x = int(form.get("x", 0))
+            y = int(form.get("y", 0))
+            scale = float(form.get("scale", 1.0))
+        except (ValueError, TypeError) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid numeric value for x, y, or scale: {exc}",
+            ) from exc
+        bg_file = form.get("background_file")
+        if bg_file is not None:
+            if not callable(getattr(bg_file, "read", None)):
+                raise HTTPException(
+                    status_code=400,
+                    detail="background_file must be a file upload",
+                )
+            background_file_data = await bg_file.read()
+    else:
+        try:
+            body = await request.json()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid JSON body: {exc}",
+            ) from exc
+        cutout_image_id = body.get("cutout_image_id")
+        background_id = body.get("background_id")
+        try:
+            x = int(body.get("x", 0))
+            y = int(body.get("y", 0))
+            scale = float(body.get("scale", 1.0))
+        except (ValueError, TypeError) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid numeric value for x, y, or scale: {exc}",
+            ) from exc
+
+    if not cutout_image_id:
+        raise HTTPException(
+            status_code=400,
+            detail="cutout_image_id is required",
+        )
+
+    _validate_id(cutout_image_id, "cutout image ID")
+
+    # Load cutout RGBA
+    cutout_path = _get_image_dir(cutout_image_id) / "cutout.png"
+    if not cutout_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Cutout '{cutout_image_id}' not found",
+        )
+    with Image.open(str(cutout_path)) as _cutout_img:
+        subject = _cutout_img.convert("RGBA")
+    crop_w, crop_h = subject.size
+
+    # Load or generate background
+    provider = BackgroundProvider()
+    if background_file_data is not None:
+        # Custom upload
+        if len(background_file_data) > MAX_UPLOAD_SIZE_BYTES:
+            raise HTTPException(
+                status_code=400,
+                detail="Background file too large",
+            )
+        _validate_image_bytes(background_file_data)
+        bg_img = _load_image(background_file_data)
+        bg_img = provider.resize_to_fill(bg_img, crop_w, crop_h)
+    elif background_id:
+        bg_img = provider.get_background(background_id, crop_w, crop_h)
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Either background_id or background_file is required",
+        )
+
+    compositor = Compositor()
+    result = await asyncio.to_thread(compositor.composite, subject, bg_img, x, y, scale)
+
+    composite_id = uuid.uuid4().hex
+    _save_image(composite_id, result)
+
+    logger.info(
+        "Composite complete: id=%s size=%dx%d bg=%s elapsed=%.2fs",
+        composite_id,
+        result.width,
+        result.height,
+        background_id or "custom-upload",
+        time.monotonic() - t0,
+    )
+    return CompositeResponse(
+        composite_image_id=composite_id, width=result.width, height=result.height
     )

@@ -1,7 +1,6 @@
 ---
 name: Feature Reviewer
 description: "Use when: reviewing code, checking implementation against requirements, auditing for bugs, evaluating code quality, or validating that implementation matches the plan. Provides structured code review."
-tools: [read, search, edit, github-pull-request_activePullRequest, github-pull-request_issue_fetch, get_changed_files, run_in_terminal, fetch, get_changed_files]
 model: "Claude Opus 4 (Copilot)"
 ---
 
@@ -130,7 +129,7 @@ When reviewing a pull request (rather than local files), use the GitHub PR tools
 
 - Use `github-pull-request_activePullRequest` to retrieve the active PR's description, changed files, and existing review comments
 - Use `get_changed_files` to get the git diff of all modified files
-- Use `github-pull-request_issue_fetch` to fetch any linked issues or referenced PRs for requirements context
+- Use `github-pull-request_issue_web` to web any linked issues or referenced PRs for requirements context
 
 ### 2. Incorporate Review Comments
 
@@ -197,7 +196,7 @@ After the review is complete — and after any approved fixes have been applied 
 | # | Issue | Severity | File:Line | AC | Status |
 |---|-------|----------|-----------|-----|--------|
 | 1 | Missing null check on user input | High | `src/handler.py:45` | AC3 | Fixed |
-| 2 | Inconsistent naming: `getData` vs `fetch_data` | Low | `src/utils.py:12` | — | Open |
+| 2 | Inconsistent naming: `getData` vs `web_data` | Low | `src/utils.py:12` | — | Open |
 
 **Status values**: Fixed (applied during this review) | Open (not addressed) | Wont-Fix (declined with rationale)
 

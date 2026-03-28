@@ -11,9 +11,7 @@ def _parse_int_env(name: str, default: str) -> int:
     try:
         return int(raw)
     except (ValueError, TypeError) as exc:
-        raise ValueError(
-            f"Environment variable {name}={raw!r} is not a valid integer"
-        ) from exc
+        raise ValueError(f"Environment variable {name}={raw!r} is not a valid integer") from exc
 
 
 # --- Upload ---
@@ -62,14 +60,17 @@ PRINTABLE_HEIGHT_MM: float = (
 MARGIN_SIDE_MM: float = (PAPER_WIDTH_MM - PRINTABLE_WIDTH_MM) / 2
 MARGIN_TOP_MM: float = (PAPER_HEIGHT_MM - PRINTABLE_HEIGHT_MM) / 2
 
+# --- Cutout / Compositing (Phase 3) ---
+CUTOUT_MASK_BLUR_RADIUS: int = 3
+CUTOUT_MORPH_KERNEL_SIZE: int = 5
+COMPOSITE_MIN_SCALE: float = 0.25
+COMPOSITE_MAX_SCALE: float = 2.0
+PRESET_BACKGROUNDS_DIR: Path = Path(__file__).resolve().parent.parent / "static" / "presets"
+
 # --- Temp storage ---
-TEMP_DIR: Path = (
-    Path(os.getenv("COLORING_TEMP_DIR", tempfile.gettempdir())) / "coloring-app"
-)
+TEMP_DIR: Path = Path(os.getenv("COLORING_TEMP_DIR", tempfile.gettempdir())) / "coloring-app"
 TEMP_TTL_SECONDS: int = _parse_int_env("TEMP_TTL_SECONDS", "3600")
-TEMP_CLEANUP_INTERVAL_SECONDS: int = _parse_int_env(
-    "TEMP_CLEANUP_INTERVAL_SECONDS", "300"
-)
+TEMP_CLEANUP_INTERVAL_SECONDS: int = _parse_int_env("TEMP_CLEANUP_INTERVAL_SECONDS", "300")
 
 
 def validate_config() -> None:
