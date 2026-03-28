@@ -83,6 +83,15 @@ header h1 {
 }
 
 /* --- Upload --- */
+#file-input {
+    display: none !important;
+}
+
+label.btn {
+    cursor: pointer;
+    display: inline-block;
+}
+
 .upload-area {
     text-align: center;
     padding: 40px;

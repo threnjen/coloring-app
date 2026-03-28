@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mosaic Coloring App</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" integrity="sha512-UtLOu9C7NuThQhuXXrGwx9Jb/z9zPQJctuAgNUBK3Z6kkSYT9wJ+2+dh6klS+TDBCV9kNPBbAxbVD+vCcfGPaA==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
     <header>
@@ -18,10 +18,10 @@
         <section id="step-upload" class="step active">
             <h2>1. Upload a Photo</h2>
             <div class="upload-area" id="upload-area">
-                <input type="file" id="file-input" accept="image/jpeg,image/png" hidden>
-                <button id="upload-btn" class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" accept="image/jpeg,image/png">
+                <label for="file-input" class="btn btn-primary" id="upload-btn">
                     Choose Photo
-                </button>
+                </label>
                 <p class="hint">JPEG or PNG, max 20MB</p>
             </div>
             <div id="upload-error" class="error" hidden></div>
