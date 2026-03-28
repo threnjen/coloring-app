@@ -26,6 +26,7 @@ A web application that converts uploaded photos into mosaic color-by-number colo
 
 | Component Size | Columns × Rows | Total Cells |
 |----------------|---------------|-------------|
+| 3mm | 60 × 80 | ~4,800 |
 | 4mm | 50 × 65 | ~3,250 |
 | 5mm | 40 × 52 | ~2,080 |
 | 6mm | 33 × 43 | ~1,419 |
