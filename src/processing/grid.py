@@ -3,7 +3,6 @@
 import logging
 
 import numpy as np
-from scipy import stats
 
 from src.config import GRID_COLUMNS, GRID_ROWS
 from src.models.mosaic import ColorPalette, GridCell
@@ -59,7 +58,7 @@ class GridGenerator:
                 x_start = int(c * cell_w)
                 x_end = int((c + 1) * cell_w)
                 region = label_map[y_start:y_end, x_start:x_end]
-                color_index = int(stats.mode(region, axis=None, keepdims=False).mode)
+                color_index = int(np.bincount(region.flat).argmax())
                 cell = GridCell(
                     row=r,
                     col=c,

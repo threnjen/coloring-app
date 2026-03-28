@@ -51,6 +51,14 @@ class ProcessRequest(BaseModel):
     mode: MosaicMode = MosaicMode.SQUARE
 
 
+class PaletteEntry(BaseModel):
+    """A single entry in the color palette."""
+
+    index: int
+    label: str
+    hex: str
+
+
 class ProcessResponse(BaseModel):
     """Response after processing into a mosaic."""
 
@@ -60,7 +68,7 @@ class ProcessResponse(BaseModel):
     rows: int
     component_size_mm: float
     mode: MosaicMode
-    palette: list[dict]
+    palette: list[PaletteEntry]
 
 
 class PaletteEditRequest(BaseModel):
@@ -81,11 +89,5 @@ class PaletteEditRequest(BaseModel):
 class PaletteEditResponse(BaseModel):
     """Response after editing a palette color."""
 
-    palette: list[dict]
+    palette: list[PaletteEntry]
     warnings: list[str]
-
-
-class ErrorResponse(BaseModel):
-    """Standard error response."""
-
-    detail: str

@@ -7,41 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from src.main import app
-
-
-@pytest.fixture
-def client():
-    """FastAPI test client."""
-    return TestClient(app)
-
-
-def _make_jpeg_bytes(width: int = 400, height: int = 300) -> bytes:
-    """Create a JPEG image in memory."""
-    arr = np.random.default_rng(42).integers(
-        0, 255, size=(height, width, 3), dtype=np.uint8
-    )
-    img = Image.fromarray(arr, "RGB")
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG")
-    return buf.getvalue()
-
-
-def _upload_and_crop(client: TestClient) -> str:
-    """Upload and crop an image, returning the cropped image ID."""
-    data = _make_jpeg_bytes(800, 600)
-    upload_res = client.post(
-        "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
-    )
-    assert upload_res.status_code == 200
-    image_id = upload_res.json()["image_id"]
-
-    crop_res = client.post(
-        "/api/crop",
-        json={"image_id": image_id, "x": 50, "y": 50, "width": 600, "height": 400},
-    )
-    assert crop_res.status_code == 200
-    return crop_res.json()["cropped_image_id"]
+from tests.conftest import make_jpeg_bytes, upload_and_crop
 
 
 class TestPipelineCircleMode:
@@ -49,7 +15,7 @@ class TestPipelineCircleMode:
 
     def test_pipeline_circle_mode(self, client: TestClient) -> None:
         """Full pipeline with mode=circle produces valid PDF."""
-        cropped_id = _upload_and_crop(client)
+        cropped_id = upload_and_crop(client)
 
         process_res = client.post(
             "/api/process",
@@ -80,7 +46,7 @@ class TestPipelineHexagonMode:
 
     def test_pipeline_hexagon_mode(self, client: TestClient) -> None:
         """Full pipeline with mode=hexagon produces valid PDF."""
-        cropped_id = _upload_and_crop(client)
+        cropped_id = upload_and_crop(client)
 
         process_res = client.post(
             "/api/process",
@@ -111,7 +77,7 @@ class TestModeSwitchPreservesPalette:
 
     def test_mode_switch_preserves_palette(self, client: TestClient) -> None:
         """Process as square, then as circle — same palette colors and order."""
-        cropped_id = _upload_and_crop(client)
+        cropped_id = upload_and_crop(client)
 
         sq_res = client.post(
             "/api/process",

@@ -6,6 +6,7 @@ import math
 from PIL import Image, ImageDraw, ImageFont
 
 from src.models.mosaic import ColorPalette, GridCell
+from src.rendering.color_utils import perceived_brightness
 from src.rendering.geometry import hex_vertices
 
 logger = logging.getLogger(__name__)
@@ -94,7 +95,7 @@ class PreviewRenderer:
     @staticmethod
     def _label_color_for_rgb(rgb: tuple[int, int, int]) -> str:
         """Return 'white' or 'black' for optimal contrast against the given RGB color."""
-        brightness = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
+        brightness = perceived_brightness(rgb[0], rgb[1], rgb[2])
         return "white" if brightness < 128 else "black"
 
     def _draw_square_cell(

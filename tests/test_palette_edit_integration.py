@@ -7,29 +7,12 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from src.main import app
-
-
-@pytest.fixture
-def client():
-    """FastAPI test client."""
-    return TestClient(app)
-
-
-def _make_jpeg_bytes(width: int = 400, height: int = 300) -> bytes:
-    """Create a JPEG image in memory."""
-    arr = np.random.default_rng(42).integers(
-        0, 255, size=(height, width, 3), dtype=np.uint8
-    )
-    img = Image.fromarray(arr, "RGB")
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG")
-    return buf.getvalue()
+from tests.conftest import make_jpeg_bytes
 
 
 def _upload_crop_process(client: TestClient, num_colors: int = 12) -> dict:
     """Upload, crop, and process an image. Returns process response body."""
-    data = _make_jpeg_bytes(800, 600)
+    data = make_jpeg_bytes(800, 600)
     upload_res = client.post(
         "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
     )

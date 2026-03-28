@@ -1,8 +1,20 @@
 """Shared test fixtures."""
 
+import io
+
 import numpy as np
 import pytest
+from fastapi.testclient import TestClient
 from PIL import Image
+
+from src.main import app
+from src.models.mosaic import ColorPalette, GridCell
+
+
+@pytest.fixture
+def client():
+    """FastAPI test client."""
+    return TestClient(app)
 
 
 @pytest.fixture
@@ -43,3 +55,68 @@ def transparent_png_image() -> Image.Image:
     arr[:, :, 0] = 200  # Red
     arr[:, :, 3] = 128  # Semi-transparent
     return Image.fromarray(arr, "RGBA")
+
+
+def make_jpeg_bytes(width: int = 400, height: int = 300) -> bytes:
+    """Create a JPEG image in memory."""
+    arr = np.random.default_rng(42).integers(
+        0, 255, size=(height, width, 3), dtype=np.uint8
+    )
+    img = Image.fromarray(arr, "RGB")
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    return buf.getvalue()
+
+
+def make_png_bytes(width: int = 400, height: int = 300, mode: str = "RGB") -> bytes:
+    """Create a PNG image in memory."""
+    if mode == "RGBA":
+        arr = np.random.default_rng(42).integers(
+            0, 255, size=(height, width, 4), dtype=np.uint8
+        )
+    else:
+        arr = np.random.default_rng(42).integers(
+            0, 255, size=(height, width, 3), dtype=np.uint8
+        )
+    img = Image.fromarray(arr, mode)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def upload_and_crop(client: TestClient, width: int = 800, height: int = 600) -> str:
+    """Upload and crop an image, returning the cropped image ID."""
+    data = make_jpeg_bytes(width, height)
+    upload_res = client.post(
+        "/api/upload", files={"file": ("test.jpg", data, "image/jpeg")}
+    )
+    assert upload_res.status_code == 200
+    image_id = upload_res.json()["image_id"]
+
+    crop_res = client.post(
+        "/api/crop",
+        json={"image_id": image_id, "x": 50, "y": 50, "width": 600, "height": 400},
+    )
+    assert crop_res.status_code == 200
+    return crop_res.json()["cropped_image_id"]
+
+
+def make_grid(
+    n_colors: int, columns: int, rows: int
+) -> tuple[list[list[GridCell]], ColorPalette]:
+    """Build a simple grid and palette for testing."""
+    palette = ColorPalette(
+        colors_rgb=np.random.default_rng(42).integers(
+            0, 255, size=(n_colors, 3), dtype=np.uint8
+        )
+    )
+    grid = []
+    for r in range(rows):
+        row_cells = []
+        for c in range(columns):
+            idx = (r * columns + c) % n_colors
+            row_cells.append(
+                GridCell(row=r, col=c, color_index=idx, label=palette.label(idx))
+            )
+        grid.append(row_cells)
+    return grid, palette
