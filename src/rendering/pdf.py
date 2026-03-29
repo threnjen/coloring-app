@@ -82,15 +82,11 @@ class PdfRenderer:
                     if cell.row % 2 == 1:
                         x += col_spacing_pt / 2
                     y = y_top - (cell.row + 1) * row_spacing_pt
-                    self._draw_hexagon_cell(
-                        c, cell, x, y, cell_pt, font_name, font_size, sheet.palette
-                    )
+                    self._draw_hexagon_cell(c, cell, x, y, cell_pt, font_name, font_size)
                 elif mode == "circle":
                     x = x_offset + cell.col * cell_pt
                     y = y_top - (cell.row + 1) * cell_pt
-                    self._draw_circle_cell(
-                        c, cell, x, y, cell_pt, font_name, font_size, sheet.palette
-                    )
+                    self._draw_circle_cell(c, cell, x, y, cell_pt, font_name, font_size)
                 else:
                     x = x_offset + cell.col * cell_pt
                     y = y_top - (cell.row + 1) * cell_pt
@@ -126,7 +122,6 @@ class PdfRenderer:
         cell_pt: float,
         font_name: str,
         font_size: float,
-        palette: "ColorPalette",
     ) -> None:
         """Draw a single circle cell with outline and label."""
         gap_pt = 0.5 * mm
@@ -154,7 +149,6 @@ class PdfRenderer:
         cell_pt: float,
         font_name: str,
         font_size: float,
-        palette: "ColorPalette",
     ) -> None:
         """Draw a single hexagon cell with outline and label."""
         gap_pt = 0.5 * mm

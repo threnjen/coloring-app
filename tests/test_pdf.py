@@ -8,38 +8,7 @@ from reportlab.lib.units import mm
 
 from src.models.mosaic import ColorPalette, GridCell, MosaicSheet
 from src.rendering.pdf import PdfRenderer
-
-
-def _make_sheet(
-    n_colors: int = 12,
-    columns: int = 60,
-    rows: int = 80,
-    component_size_mm: float = 3.0,
-) -> MosaicSheet:
-    """Helper to build a MosaicSheet for testing."""
-    palette = ColorPalette(
-        colors_rgb=np.random.default_rng(42).integers(
-            0, 255, size=(n_colors, 3), dtype=np.uint8
-        )
-    )
-    grid = []
-    for r in range(rows):
-        row_cells = []
-        for c in range(columns):
-            idx = (r * columns + c) % n_colors
-            row_cells.append(
-                GridCell(row=r, col=c, color_index=idx, label=palette.label(idx))
-            )
-        grid.append(row_cells)
-
-    return MosaicSheet(
-        mosaic_id="test-pdf",
-        grid=grid,
-        palette=palette,
-        columns=columns,
-        rows=rows,
-        component_size_mm=component_size_mm,
-    )
+from tests.conftest import make_sheet as _make_sheet
 
 
 class TestPdfRenderer:
@@ -59,20 +28,18 @@ class TestPdfRenderer:
 
     def test_pdf_grid_page_dimensions(self) -> None:
         """Grid should occupy 180mm × 240mm on US Letter (60×80 at 3mm). AC1.10."""
-        from src.config import (
-            MARGIN_SIDE_MM,
-            MARGIN_TOP_MM,
-            PAPER_HEIGHT_MM,
-            PAPER_WIDTH_MM,
-        )
+        from src.config import PAPER_HEIGHT_MM, PAPER_WIDTH_MM
 
         sheet = _make_sheet(n_colors=12, columns=60, rows=80)
         grid_width_mm = sheet.columns * sheet.component_size_mm
         grid_height_mm = sheet.rows * sheet.component_size_mm
         assert grid_width_mm == 180.0
         assert grid_height_mm == 240.0
-        assert grid_width_mm + 2 * MARGIN_SIDE_MM <= PAPER_WIDTH_MM
-        assert grid_height_mm + MARGIN_TOP_MM <= PAPER_HEIGHT_MM
+        # Margins computed dynamically (same as pdf.py)
+        margin_side_mm = (PAPER_WIDTH_MM - grid_width_mm) / 2
+        margin_top_mm = (PAPER_HEIGHT_MM - grid_height_mm) / 2
+        assert grid_width_mm + 2 * margin_side_mm <= PAPER_WIDTH_MM
+        assert grid_height_mm + margin_top_mm <= PAPER_HEIGHT_MM
 
         renderer = PdfRenderer()
         pdf_bytes = renderer.render(sheet)

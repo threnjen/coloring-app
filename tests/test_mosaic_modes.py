@@ -7,27 +7,7 @@ import pytest
 
 from src.models.mosaic import ColorPalette, GridCell, MosaicSheet
 from src.rendering.preview import PreviewRenderer
-from tests.conftest import make_grid
-
-
-def _make_sheet(
-    n_colors: int = 12,
-    columns: int = 10,
-    rows: int = 10,
-    component_size_mm: float = 3.0,
-    mode: str = "square",
-) -> MosaicSheet:
-    """Build a MosaicSheet for testing."""
-    grid, palette = make_grid(n_colors, columns, rows)
-    return MosaicSheet(
-        mosaic_id="test-modes",
-        grid=grid,
-        palette=palette,
-        columns=columns,
-        rows=rows,
-        component_size_mm=component_size_mm,
-        mode=mode,
-    )
+from tests.conftest import make_grid, make_sheet as _make_sheet
 
 
 class TestMosaicModeEnum:
@@ -71,9 +51,7 @@ class TestCirclePreview:
         cx, cy = 10, 10  # center of cell_size=20
         center_color = tuple(pixels[cy, cx])
         expected = tuple(int(v) for v in palette.colors_rgb[grid[0][0].color_index])
-        assert (
-            center_color == expected
-        ), f"Center should be {expected}, got {center_color}"
+        assert center_color == expected, f"Center should be {expected}, got {center_color}"
 
 
 class TestHexagonPreview:
@@ -129,12 +107,8 @@ class TestHexagonPreview:
         # For pointy-top, the top vertex should be directly above center
         # Top vertex: (cx, cy - R)
         top_vertex = vertices[0]
-        assert top_vertex[0] == pytest.approx(
-            100, abs=0.1
-        ), "Top vertex x should be at center"
-        assert top_vertex[1] == pytest.approx(
-            80, abs=0.1
-        ), "Top vertex y should be cy - R"
+        assert top_vertex[0] == pytest.approx(100, abs=0.1), "Top vertex x should be at center"
+        assert top_vertex[1] == pytest.approx(80, abs=0.1), "Top vertex y should be cy - R"
 
 
 class TestCirclePdf:
@@ -167,9 +141,7 @@ class TestCirclePdf:
         # All labels should appear in the PDF
         for i in range(4):
             label = sheet.palette.label(i)
-            assert (
-                label.encode("latin-1") in pdf_bytes
-            ), f"Label '{label}' missing from PDF"
+            assert label.encode("latin-1") in pdf_bytes, f"Label '{label}' missing from PDF"
 
 
 class TestHexagonPdf:
@@ -198,9 +170,9 @@ class TestLegendModeIndependent:
         from src.rendering.pdf import PdfRenderer
 
         renderer = PdfRenderer()
-        square_sheet = _make_sheet(n_colors=8, mode="square")
-        circle_sheet = _make_sheet(n_colors=8, mode="circle")
-        hex_sheet = _make_sheet(n_colors=8, mode="hexagon")
+        square_sheet = _make_sheet(n_colors=8, columns=10, rows=10, mode="square")
+        circle_sheet = _make_sheet(n_colors=8, columns=10, rows=10, mode="circle")
+        hex_sheet = _make_sheet(n_colors=8, columns=10, rows=10, mode="hexagon")
 
         sq_pdf = renderer.render(square_sheet)
         ci_pdf = renderer.render(circle_sheet)

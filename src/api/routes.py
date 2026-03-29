@@ -1,6 +1,7 @@
 """API endpoints: upload, crop, process, preview, PDF download."""
 
 import asyncio
+import json
 import logging
 import re
 import shutil
@@ -16,9 +17,12 @@ from fastapi import APIRouter, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from PIL import Image
 
+from pydantic import ValidationError
+
 from src.api.schemas import (
     BackgroundInfoSchema,
     BackgroundListResponse,
+    CompositeRequest,
     CompositeResponse,
     CropRequest,
     CropResponse,
@@ -274,11 +278,11 @@ def _run_pipeline(
 
     try:
         columns, rows = GRID_DIMENSIONS[(size, mode)]
-    except KeyError:
+    except KeyError as exc:
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported size/mode combination: size={size}, mode={mode}",
-        )
+        ) from exc
 
     # Enhance — keep the pre-enhancement crop for before/after comparison
     pre_enhance_img = img.copy()
@@ -441,9 +445,8 @@ def _compute_palette_warnings(palette: ColorPalette, color_index: int) -> list[s
     for i in range(palette.count):
         if i == color_index:
             continue
-        other_rgb = np.asarray(palette.colors_rgb[i], dtype=np.uint8)
         dist = np.linalg.norm(new_lab - all_lab[i])
-        if dist < _MIN_LAB_DISTANCE and not np.array_equal(new_rgb, other_rgb):
+        if dist < _MIN_LAB_DISTANCE and not np.array_equal(new_rgb, all_rgb[i]):
             warnings.append(
                 f"Color {palette.label(color_index)} is very similar to "
                 f"{palette.label(i)} — they may be hard to distinguish"
@@ -490,9 +493,12 @@ async def edit_palette(req: PaletteEditRequest) -> PaletteEditResponse:
     warnings = _compute_palette_warnings(palette, req.color_index)
 
     # Re-render preview (CPU-bound + disk I/O — run off the event loop)
+    # Snapshot palette colors to avoid race with concurrent edit_palette requests
+    palette_snapshot = ColorPalette(colors_rgb=palette.colors_rgb.copy())
+
     def _render_and_save() -> None:
         renderer = PreviewRenderer()
-        preview_img = renderer.render(sheet.grid, palette, mode=sheet.mode)
+        preview_img = renderer.render(sheet.grid, palette_snapshot, mode=sheet.mode)
         preview_dir = _get_image_dir(sheet.mosaic_id)
         preview_dir.mkdir(parents=True, exist_ok=True)
         preview_img.save(str(preview_dir / "preview.png"), "PNG")
@@ -610,22 +616,20 @@ async def composite_image(request: Request) -> CompositeResponse:
     else:
         try:
             body = await request.json()
-        except Exception as exc:
+        except json.JSONDecodeError as exc:
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid JSON body: {exc}",
             ) from exc
-        cutout_image_id = body.get("cutout_image_id")
-        background_id = body.get("background_id")
         try:
-            x = int(body.get("x", 0))
-            y = int(body.get("y", 0))
-            scale = float(body.get("scale", 1.0))
-        except (ValueError, TypeError) as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid numeric value for x, y, or scale: {exc}",
-            ) from exc
+            req = CompositeRequest.model_validate(body)
+        except ValidationError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        cutout_image_id = req.cutout_image_id
+        background_id = req.background_id
+        x = req.x
+        y = req.y
+        scale = req.scale
 
     if not cutout_image_id:
         raise HTTPException(

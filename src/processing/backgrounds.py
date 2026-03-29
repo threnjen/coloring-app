@@ -3,6 +3,7 @@
 import logging
 import re
 from dataclasses import dataclass, field
+from functools import lru_cache
 
 import numpy as np
 from PIL import Image
@@ -160,20 +161,29 @@ class BackgroundProvider:
 
     @staticmethod
     def _scan_presets() -> list[BackgroundInfo]:
-        """Scan the presets directory for valid image files."""
-        presets: list[BackgroundInfo] = []
-        if not PRESET_BACKGROUNDS_DIR.exists():
-            return presets
+        """Scan presets directory (delegates to module-level cached function)."""
+        return _scan_presets_cached(str(PRESET_BACKGROUNDS_DIR))
 
-        for path in sorted(PRESET_BACKGROUNDS_DIR.iterdir()):
-            if not _VALID_PRESET_RE.match(path.name):
-                continue
-            stem = path.stem
-            presets.append(
-                BackgroundInfo(
-                    id=f"preset-{stem}",
-                    name=stem,
-                    type="preset",
-                )
-            )
+
+@lru_cache(maxsize=1)
+def _scan_presets_cached(presets_dir: str) -> list[BackgroundInfo]:
+    """Scan the presets directory for valid image files (cached)."""
+    from pathlib import Path
+
+    presets_path = Path(presets_dir)
+    presets: list[BackgroundInfo] = []
+    if not presets_path.exists():
         return presets
+
+    for path in sorted(presets_path.iterdir()):
+        if not _VALID_PRESET_RE.match(path.name):
+            continue
+        stem = path.stem
+        presets.append(
+            BackgroundInfo(
+                id=f"preset-{stem}",
+                name=stem,
+                type="preset",
+            )
+        )
+    return presets

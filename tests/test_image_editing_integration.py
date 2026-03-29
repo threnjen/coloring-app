@@ -7,31 +7,12 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from tests.conftest import make_png_bytes, upload_and_crop
-
-
-@pytest.fixture
-def client():
-    from src.main import app
-
-    return TestClient(app)
-
-
-def _mock_rembg_remove(image, **kwargs):
-    """Mock rembg.remove that creates a simple RGBA output."""
-    arr = np.array(image)
-    h, w = arr.shape[:2]
-    alpha = np.zeros((h, w), dtype=np.uint8)
-    # Make a rough subject mask — center 60% opaque
-    margin_h, margin_w = h // 5, w // 5
-    alpha[margin_h : h - margin_h, margin_w : w - margin_w] = 255
-    rgba = np.dstack([arr, alpha])
-    return Image.fromarray(rgba, "RGBA")
+from tests.conftest import make_png_bytes, mock_rembg_remove, upload_and_crop
 
 
 def _cutout_image(client: TestClient, cropped_id: str) -> str:
     """Helper: run cutout and return cutout_image_id."""
-    with patch("src.processing.cutout.remove", side_effect=_mock_rembg_remove):
+    with patch("src.processing.cutout.remove", side_effect=mock_rembg_remove):
         res = client.post("/api/cutout", json={"image_id": cropped_id})
     assert res.status_code == 200
     return res.json()["cutout_image_id"]
@@ -43,7 +24,7 @@ class TestCutoutEndpoint:
     def test_cutout_endpoint(self, client: TestClient) -> None:
         """POST valid image_id → 200 + cutout_image_id."""
         cropped_id = upload_and_crop(client)
-        with patch("src.processing.cutout.remove", side_effect=_mock_rembg_remove):
+        with patch("src.processing.cutout.remove", side_effect=mock_rembg_remove):
             res = client.post("/api/cutout", json={"image_id": cropped_id})
         assert res.status_code == 200
         data = res.json()

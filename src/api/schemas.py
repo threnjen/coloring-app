@@ -129,7 +129,7 @@ class CompositeRequest(BaseModel):
     """Request to composite a cutout onto a background."""
 
     cutout_image_id: str
-    background_id: str
+    background_id: str | None = None
     x: int = 0
     y: int = 0
     scale: float = Field(default=1.0, ge=0.25, le=2.0)

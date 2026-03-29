@@ -2,6 +2,7 @@
 
 import logging
 import math
+from functools import lru_cache
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -12,6 +13,19 @@ from src.rendering.geometry import hex_vertices
 logger = logging.getLogger(__name__)
 
 PREVIEW_CELL_PX: int = 12
+
+
+@lru_cache(maxsize=4)
+def _load_font(font_size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    """Load a TrueType font at *font_size*, falling back to default bitmap."""
+    try:
+        return ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size)
+    except (OSError, IOError):
+        try:
+            return ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", font_size)
+        except (OSError, IOError):
+            logger.warning("No TrueType font found; falling back to default bitmap font")
+            return ImageFont.load_default()
 
 
 class PreviewRenderer:
@@ -64,20 +78,7 @@ class PreviewRenderer:
         draw = ImageDraw.Draw(img)
 
         font_size = max(7, self._cell_size - 4)
-        try:
-            font = ImageFont.truetype(
-                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size
-            )
-        except (OSError, IOError):
-            try:
-                font = ImageFont.truetype(
-                    "/System/Library/Fonts/Helvetica.ttc", font_size
-                )
-            except (OSError, IOError):
-                logger.warning(
-                    "No TrueType font found; falling back to default bitmap font"
-                )
-                font = ImageFont.load_default()
+        font = _load_font(font_size)
 
         for row_cells in grid:
             for cell in row_cells:

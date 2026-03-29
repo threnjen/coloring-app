@@ -1,6 +1,7 @@
 """Core data models for mosaic coloring sheets."""
 
 from dataclasses import dataclass, field
+from typing import Literal
 
 import numpy as np
 
@@ -87,4 +88,4 @@ class MosaicSheet:
     columns: int
     rows: int
     component_size_mm: float = 3.0
-    mode: str = "square"
+    mode: Literal["square", "circle", "hexagon"] = "square"

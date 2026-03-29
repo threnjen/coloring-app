@@ -17,7 +17,6 @@ def _parse_int_env(name: str, default: str) -> int:
 # --- Upload ---
 MAX_UPLOAD_SIZE_MB: int = _parse_int_env("MAX_UPLOAD_SIZE_MB", "20")
 MAX_UPLOAD_SIZE_BYTES: int = MAX_UPLOAD_SIZE_MB * 1024 * 1024
-ALLOWED_MIME_TYPES: set[str] = {"image/jpeg", "image/png"}
 MAX_IMAGE_DIMENSION: int = _parse_int_env("MAX_IMAGE_DIMENSION", "4000")
 MIN_CROP_PIXELS: int = 50
 
@@ -28,7 +27,6 @@ LABEL_CHARS: str = "0123456789ABCDEFGHIJ"
 
 
 # --- Grid (Phase 1 defaults: 3mm) ---
-COMPONENT_SIZE_MM: float = 3.0
 GRID_COLUMNS: int = 60
 GRID_ROWS: int = 80
 
@@ -51,14 +49,6 @@ GRID_DIMENSIONS: dict[tuple[int, str], tuple[int, int]] = {
 # --- Paper: US Letter ---
 PAPER_WIDTH_MM: float = 215.9
 PAPER_HEIGHT_MM: float = 279.4
-PRINTABLE_WIDTH_MM: float = (
-    GRID_COLUMNS * COMPONENT_SIZE_MM
-)  # Default 3mm: 180mm (margins vary by size/mode)
-PRINTABLE_HEIGHT_MM: float = (
-    GRID_ROWS * COMPONENT_SIZE_MM
-)  # Default 3mm: 240mm (margins vary by size/mode)
-MARGIN_SIDE_MM: float = (PAPER_WIDTH_MM - PRINTABLE_WIDTH_MM) / 2
-MARGIN_TOP_MM: float = (PAPER_HEIGHT_MM - PRINTABLE_HEIGHT_MM) / 2
 
 # --- Cutout / Compositing (Phase 3) ---
 CUTOUT_MASK_BLUR_RADIUS: int = 3
